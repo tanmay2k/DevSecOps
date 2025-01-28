@@ -12,6 +12,28 @@
             border: 1px solid #ddd;
             padding: 10px;
             border-radius: 5px;
+            background-color: #f8f9fa;
+        }
+        .chat-bubble {
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            max-width: 75%;
+        }
+        .user-message {
+            background-color: #007bff;
+            color: white;
+            align-self: flex-end;
+        }
+        .bot-message {
+            background-color: #e9ecef;
+            color: black;
+            align-self: flex-start;
+        }
+        .timestamp {
+            font-size: 0.8rem;
+            color: gray;
+            text-align: right;
         }
     </style>
 </head>
@@ -20,14 +42,21 @@
         <h1 class="text-center">Personal Finance Assistant</h1>
 
         <!-- Chat History -->
-        <div id="chat-history" class="mb-4">
+        <div id="chat-history" class="d-flex flex-column mb-4">
             {% for chat in chat_history %}
-                <div class="mb-3">
-                    <strong>You:</strong> {{ chat.message }}
-                    <div><strong>Bot:</strong> {{ chat.response }}</div>
-                </div>
-                <hr>
+                    <div class="d-flex justify-content-end">
+                        <div class="chat-bubble user-message">
+                            <strong>You:</strong> {{ chat.message }}
+                            <div class="timestamp">{{ chat.timestamp|date:"H:i" }}</div>
+                        </div>
+                    </div>
 
+                    <div class="d-flex justify-content-start">
+                        <div class="chat-bubble bot-message">
+                            <strong>Bot:</strong> {{ chat.response }}
+                            <div class="timestamp">{{ chat.timestamp|date:"H:i" }}</div>
+                        </div>
+                    </div>
             {% endfor %}
         </div>
 
@@ -44,33 +73,53 @@
     <!-- JavaScript -->
     <script>
         document.getElementById("chat-form").addEventListener("submit", async function (event) {
-            event.preventDefault();
+            event.preventDefault(); // Prevent default form submission
 
-            const message = document.getElementById("message").value;
-            const response = await fetch("{% url 'chatbot' %}", {
-                method: "POST",
-                headers: {
-                    "X-CSRFToken": "{{ csrf_token }}",
-                    "Content-Type": "application/x-www-form-urlencoded",
-                },
-                body: new URLSearchParams({ message }),
-            });
+            const messageInput = document.getElementById("message");
+            const message = messageInput.value;
+            const chatHistory = document.getElementById("chat-history");
 
-            const data = await response.json();
+            try {
+                const response = await fetch("{% url 'chatbot' %}", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": "{{ csrf_token }}",
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ message }),
+                });
 
-            if (response.ok) {
-                const chatHistory = document.getElementById("chat-history");
-                chatHistory.innerHTML += `
-                    <div class="mb-3">
-                        <strong>You:</strong> ${message}
-                        <div><strong>Bot:</strong> ${data.response}</div>
-                    </div>
-                    <hr>
-                `;
-                chatHistory.scrollTop = chatHistory.scrollHeight;
-                document.getElementById("message").value = "";
-            } else {
-                alert("Error sending message. Please try again.");
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // Append user's message
+                    chatHistory.innerHTML += `
+                        <div class="d-flex justify-content-end">
+                            <div class="chat-bubble user-message">
+                                <strong>You:</strong> ${message}
+                                <div class="timestamp">${new Date().toLocaleTimeString()}</div>
+                            </div>
+                        </div>
+                    `;
+
+                    // Append bot's response
+                    chatHistory.innerHTML += `
+                        <div class="d-flex justify-content-start">
+                            <div class="chat-bubble bot-message">
+                                <strong>Bot:</strong> ${data.response}
+                                <div class="timestamp">${new Date().toLocaleTimeString()}</div>
+                            </div>
+                        </div>
+                    `;
+
+                    chatHistory.scrollTop = chatHistory.scrollHeight; // Scroll to the bottom
+                    messageInput.value = ""; // Clear input
+                } else {
+                    alert("Failed to send message.");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("An error occurred. Please try again.");
             }
         });
     </script>
