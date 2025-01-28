@@ -16,11 +16,11 @@ def add_goal(request):
             return redirect('list_goals')
         else:
             # If form is invalid, re-render with error messages
-            return render(request, 'add_goal.html', {'form': form})
+            return render(request, 'goals/add_goals.html', {'form': form})
     else:
         # For non-POST requests, show the form (optional)
         form = GoalForm()
-        return render(request, 'add_goal.html', {'form': form})
+        return render(request, 'goals/add_goals.html', {'form': form})
 
 @login_required(login_url='/authentication/login')
 def list_goals(request):
@@ -71,7 +71,7 @@ def add_amount(request, goal_id):
 def send_congratulatory_email(email, goal):
     subject = 'Congratulations on achieving your goal!'
     message = f'Dear User,\n\nCongratulations on achieving your goal "{goal.name}". You have successfully saved {goal.amount_to_save}.\n\nKeep up the good work!\n\nBest regards,\nThe Goal Tracker Team, \nExpenseWise Team'
-    send_mail(subject, message, 'hemantshirsath24@gmail.com', [email])
+    send_mail(subject, message, '<your email>', [email])
     
     
 
