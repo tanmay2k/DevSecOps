@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .models import Chat
@@ -11,7 +11,7 @@ from openai import OpenAI
 
 client = OpenAI(
 	base_url="https://api-inference.huggingface.co/v1/",
-	api_key="<add your key here>"
+	api_key="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"
 )
 
 # Function to get additional context
@@ -57,7 +57,7 @@ def generate_response(user_input, context):
 @csrf_exempt
 @login_required
 def chatbot_view(request):
-    chat_history = Chat.objects.all().order_by('-timestamp')  # Fetch all chat history
+    chat_history = Chat.objects.filter(user=request.user).order_by('-timestamp')  # Fetch all chat history
 
     if request.method == 'POST':
         # Get the user message directly from POST request
@@ -83,6 +83,6 @@ def chatbot_view(request):
             Chat.objects.create(user=request.user, message=user_message, response=assistant_message)
 
             # Reload the page with updated chat history
-            return render(request, 'chatbot.html', {'chat_history': chat_history})
+            return render(request, 'finassist/chatbot.html', {'chat_history': chat_history})
 
     return render(request, 'finassist/chatbot.html', {'chat_history': chat_history})

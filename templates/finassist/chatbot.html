@@ -21,19 +21,18 @@
 
         <!-- Chat History -->
         <div id="chat-history" class="mb-4">
-            {% for chat in chats %}
+            {% for chat in chat_history %}
                 <div class="mb-3">
                     <strong>You:</strong> {{ chat.message }}
                     <div><strong>Bot:</strong> {{ chat.response }}</div>
                 </div>
                 <hr>
-            {% empty %}
-                <p>No chats yet. Start a conversation!</p>
+
             {% endfor %}
         </div>
 
         <!-- New Message Form -->
-        <form id="chat-form" method="post" action="{% url 'chatbot' %}">
+        <form id="chat-form" method="post">
             {% csrf_token %}
             <div class="input-group">
                 <input type="text" name="message" id="message" class="form-control" placeholder="Type your message..." required>
