@@ -33,6 +33,9 @@ data = pd.read_csv('dataset.csv')
 # Preprocessing
 stop_words = set(stopwords.words('english'))
 
+def home(request):
+    return render(request, 'expenses/landing.html')
+
 def preprocess_text(text):
     tokens = word_tokenize(text.lower())
     tokens = [t for t in tokens if t.isalnum() and t not in stop_words]
