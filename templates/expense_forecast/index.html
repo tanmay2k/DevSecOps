@@ -1,63 +1,111 @@
 {% extends 'base.html' %}
 {% load static %}
 
-
 {% block content %}
-<div class="container mt-4">
+<div class="container mx-auto px-4 py-8">
     {% if messages %}
-    {% include 'partials/_messages.html' %}
+        {% include 'partials/_messages.html' %}
     {% else %}
-    <h1 class="mt-4 mb-4">Expense Forecast for Next 30 Days</h1>
+        <!-- Main Header -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-extrabold text-white dark:text-white">
+                Expense Forecast
+                <span class="bg-purple-900 text-purple-200 text-2xl font-semibold mr-2 px-2.5 py-0.5 rounded dark:bg-purple-900 dark:text-purple-200 ml-2">
+                    Next 30 Days
+                </span>
+            </h1>
+        </div>
 
-    <!-- Display the forecasted expenses in a responsive table -->
-    <div class="table-responsive">
-        <table class="table table-bordered">
-            <thead style="background-color:#866ec7; color:white ;">
-                <tr>
-                    <th>Date</th>
-                    <th>Forecasted Expenses</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in forecast_data %}
-                <tr>
-                    <td>{{ row.Date }}</td>
-                    <td>{{ row.Forecasted_Expenses }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+        <!-- Stats Overview -->
+        <div class="mb-8">
+            <div class="p-6 bg-gray-800 rounded-lg shadow-lg border border-purple-700">
+                <div class="flex items-center">
+                    <div class="inline-flex flex-shrink-0 justify-center items-center w-12 h-12 text-purple-200 bg-purple-900 rounded-lg">
+                        <i class="fas fa-chart-line fa-2x"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h2 class="text-xl font-bold text-gray-100">Total Predicted Expense</h2>
+                        <p class="text-3xl font-bold text-purple-400">{{total_forecasted_expenses}}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    <!-- Display the total expenses at the end of the 30-day forecast period -->
-    <h2 class="mt-4">Total Predicted Expense at the end of 30 days: <b>{{total_forecasted_expenses}} </b></h2>
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Daily Forecast Table -->
+            <div class="relative overflow-x-auto shadow-md sm:rounded-lg border border-purple-700">
+                <div class="p-4 bg-gray-800 border-b border-purple-700">
+                    <h2 class="text-xl font-bold text-white mb-2">Daily Forecast</h2>
+                </div>
+                <table class="w-full text-sm text-left text-gray-300">
+                    <thead class="text-xs uppercase bg-purple-900 text-purple-200">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">Date</th>
+                            <th scope="col" class="px-6 py-3">Forecasted Expenses</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in forecast_data %}
+                        <tr class="border-b bg-gray-800 border-gray-700 hover:bg-gray-700">
+                            <td class="px-6 py-4">{{ row.Date }}</td>
+                            <td class="px-6 py-4">{{ row.Forecasted_Expenses }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
 
+            <!-- Category Breakdown Table -->
+            <div class="relative overflow-x-auto shadow-md sm:rounded-lg border border-purple-700">
+                <div class="p-4 bg-gray-800 border-b border-purple-700">
+                    <h2 class="text-xl font-bold text-white mb-2">Category Breakdown</h2>
+                </div>
+                <table class="w-full text-sm text-left text-gray-300">
+                    <thead class="text-xs uppercase bg-purple-900 text-purple-200">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">Category</th>
+                            <th scope="col" class="px-6 py-3">Total Forecasted</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for category, expenses in category_forecasts.items %}
+                        <tr class="border-b bg-gray-800 border-gray-700 hover:bg-gray-700">
+                            <td class="px-6 py-4">{{ category }}</td>
+                            <td class="px-6 py-4">{{ expenses }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-    <!-- Display total forecasted expenses per category -->
-    <h2 class="mt-4 mb-3">Total Forecasted Expenses per Category:</h2>
-    <div class="table-responsive">
-        <table class="table table-bordered">
-            <thead style="background-color:#866ec7; color:white ;">
-                <tr>
-                    <th>Category</th>
-                    <th>Total Forecasted Expenses</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for category, expenses in category_forecasts.items %}
-                <tr>
-                    <td>{{ category }}</td>
-                    <td>{{ expenses }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+        <!-- Forecast Plot -->
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-purple-700">
+            <div class="p-4 bg-gray-800 border-b border-purple-700">
+                <h2 class="text-xl font-bold text-white mb-2">Expense Trend Visualization</h2>
+            </div>
+            <div class="p-6">
+                <div class="relative rounded-lg overflow-hidden bg-gray-900 p-4">
+                    <img 
+                        src="{% static 'img/forecast_plot.png' %}" 
+                        alt="Expense Forecast Plot" 
+                        class="w-full h-auto rounded-lg"
+                    >
+                </div>
+            </div>
+        </div>
 
-    <!-- Display the plot in a responsive container -->
-    <div class="mt-4">
-        <img src="{% static 'img/forecast_plot.png' %}" alt="Expense Forecast Plot" class="img-fluid">
-    </div>
+        <!-- Card Hover Effect - Add to your existing style block in base.html if not already present -->
+        <style>
+            .card-hover {
+                transition: all 0.3s ease;
+            }
+            .card-hover:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 20px rgba(134, 110, 199, 0.15);
+            }
+        </style>
     {% endif %}
 </div>
 {% endblock content %}
