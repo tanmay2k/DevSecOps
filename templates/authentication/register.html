@@ -1,51 +1,113 @@
-{% extends 'base.html' %}
+{% extends 'base_auth.html' %}
 {% load static %}
 
-
 {% block content %}
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8 bg-gray-800 p-8 rounded-lg shadow-xl card-hover">
+        <!-- Header -->
+        <div class="text-center">
+            <h2 class="text-3xl font-bold text-gray-100 mb-2">
+                Create Account
+            </h2>
+            <p class="text-gray-400">
+                Join us today and start managing your expenses
+            </p>
+        </div>
 
-<div class="row">
-    <div class="col-md-3"></div>
-    <div class="col-md-6">
-        <div class="card mt-5">
-            <div class="card-body">
-                <div class="card-title py-3">
-                    <h4>Register for an account</h4>
+        <!-- Registration Form -->
+        <form class="mt-8 space-y-6" action="{% url 'register' %}" method="POST">
+            {% csrf_token %}
+            
+            <!-- Messages -->
+            {% include 'partials/_messages.html' %}
+
+            <!-- Username Field -->
+            <div>
+                <label for="usernameField" class="sr-only">Username</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-user text-gray-400"></i>
+                    </div>
+                    <input 
+                        id="usernameField"
+                        name="username"
+                        type="text"
+                        value="{{ fieldValues.username }}"
+                        required
+                        class="block w-full pl-10 pr-3 py-3 border border-gray-600 rounded-md bg-gray-700 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Choose a username"
+                    />
                 </div>
-
-                <form action="{% url 'register' %}" method="POST">
-                    {% csrf_token %}
-                    {% include 'partials/_messages.html' %}
-                    <div class="form-group">
-                        <input type="text" name="username" placeholder="username" id="usernameField"
-                            value="{{fieldValues.username}}" class="form-control form-control-sm" />
-                    </div>
-                    <div class="invalid_feedback invalid-feedback" style="display:none">
-                    </div>
-                    <p class="text-sm text-success usernameSuccessOutput"></p>
-                    <div class="form-group">
-                        <input type="email" name="email" placeholder="Email" class="form-control form-control-sm"
-                            id="emailField" value="{{fieldValues.email}}" />
-                    </div>
-
-                    <div class="emailFeedBackArea invalid-feedback" style="display:none">
-                    </div>
-                    <div class="form-group">
-                        <input type="password" name="password" placeholder="Password"
-                            class="form-control form-control-sm" id="passwordField" />
-                        <small class="float-right py-3 showPasswordToggle">SHOW</small>
-                    </div>
-                    <input type="submit" value="Register" class="btn btn-block btn-primary submit-btn" />
-                </form>
-
+                <!-- Username Feedback -->
+                <div class="invalid_feedback mt-1 text-sm text-red-400" style="display:none"></div>
+                <p class="usernameSuccessOutput mt-1 text-sm text-green-400"></p>
             </div>
 
-        </div>
+            <!-- Email Field -->
+            <div>
+                <label for="emailField" class="sr-only">Email</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-envelope text-gray-400"></i>
+                    </div>
+                    <input 
+                        id="emailField"
+                        name="email"
+                        type="email"
+                        value="{{ fieldValues.email }}"
+                        required
+                        class="block w-full pl-10 pr-3 py-3 border border-gray-600 rounded-md bg-gray-700 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Your email address"
+                    />
+                </div>
+                <!-- Email Feedback -->
+                <div class="emailFeedBackArea mt-1 text-sm text-red-400" style="display:none"></div>
+            </div>
+
+            <!-- Password Field -->
+            <div>
+                <label for="passwordField" class="sr-only">Password</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-lock text-gray-400"></i>
+                    </div>
+                    <input 
+                        id="passwordField"
+                        name="password"
+                        type="password"
+                        required
+                        class="block w-full pl-10 pr-12 py-3 border border-gray-600 rounded-md bg-gray-700 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Create a password"
+                    />
+                    <button 
+                        type="button"
+                        class="showPasswordToggle absolute inset-y-0 right-0 pr-3 flex items-center text-sm text-gray-400 hover:text-gray-300 focus:outline-none"
+                    >
+                        SHOW
+                    </button>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button
+                type="submit"
+                class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 submit-btn"
+            >
+                Create Account
+            </button>
+
+            <!-- Sign In Link -->
+            <div class="text-center text-sm">
+                <span class="text-gray-400">Already have an account?</span>
+                <a href="{% url 'login' %}" class="ml-1 text-blue-400 hover:text-blue-300">
+                    Sign in
+                </a>
+            </div>
+        </form>
     </div>
 </div>
-<div class="col-md-4"></div>
-</div>
 
+<!-- Script -->
 <script src="{% static 'js/register.js' %}"></script>
 
 {% endblock content %}
