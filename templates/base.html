@@ -1,180 +1,329 @@
-<!doctype html>
 {% load static %}
-<html lang="en">
-
+<!DOCTYPE html>
+<html lang="en" class="light">
 <head>
-    <title>ExpenseWise</title>
-
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-
-    <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700,800,900" rel="stylesheet">
-
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" href="{%static 'css/style.css' %}">
-    {% block link %}
-
-    {% endblock link %}
-    <title>MyExpenses | {% block title %} {% endblock %}</title>
-    <!-- Bootstrap core CSS -->
-    <link href="{% static 'css/bootstrap.min.css'%}" rel="stylesheet" />
-    <link href="{% static 'css/main.css'%}" rel="stylesheet" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
-
-    <!-- Custom styles for this template -->
-    <link href="{% static 'css/dashboard.css' %}" rel="stylesheet" />
-    {% block css %}
-
-    {% endblock css %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WealthWizard | {% block title %}{% endblock %}</title>
+    
+    <!-- Flowbite CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Custom CSS -->
+    <link href="{% static 'css/main.css' %}" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
 
     <style>
-        .content {
+        /* Hide scrollbar but maintain functionality */
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+        * {
+            scrollbar-width: none;
+        }
+        
+        /* Sidebar transitions */
+        .sidebar-collapsed {
+            width: 5rem;
+        }
+        .sidebar-expanded {
+            width: 16rem;
+        }
+        .content-expanded {
+            margin-left: 16rem;
+        }
+        .content-collapsed {
+            margin-left: 5rem;
+        }
+        .transition-width {
+            transition: all 0.3s ease-in-out;
+        }
+
+        /* Dark mode styles */
+        .dark .bg-white {
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        .dark .text-gray-800 {
+            color: #ffffff;
+        }
+        .dark .text-gray-700 {
+            color: #e5e5e5;
+        }
+        .dark .text-gray-600 {
+            color: #d1d1d1;
+        }
+        .dark .border-gray-200 {
+            border-color: #2d2d2d;
+        }
+        .dark .hover\:bg-gray-100:hover {
+            background-color: #2d2d2d;
+        }
+        .dark .bg-gray-50 {
+            background-color: #121212;
+        }
+        
+        /* Theme toggle animation */
+        .theme-icon {
+            transition: transform 0.3s ease;
+        }
+        .dark .theme-icon {
+            transform: rotate(360deg);
+        }
+        
+        /* Navbar styles */
+        .navbar-notification-badge {
+            top: -2px;
+            right: -2px;
+        }
+        
+        /* Sidebar collapse styles */
+        .sidebar-collapsed .sidebar-content {
+            display: none;
+        }
+        .sidebar-collapsed .toggle-container {
+            display: flex;
+            justify-content: center;
             width: 100%;
-            overflow-y: scroll;
-            height: 100vh;
         }
-
-        #sidebar {
-            position: sticky;
-            top: 0;
-            height: 100%;
-            z-index: 2;
-        }
-
-        .black-text {
-            color: black;
-            font-weight: bold;
-        }
-
-        #sidebar .custom-menu {
-            position: absolute;
-        }
-
-        .logo {
-            font-size: 25px;
-        }
-
-        .sidebar-collapsed .content {
-            margin: auto;
-        }
-
-        /* Add spacing between icon and text */
-        .nav-link i {
-            margin-right: 10px;
-            width: 20px;
-            text-align: center;
+        
+        /* User dropdown styles */
+        .user-dropdown {
+            min-width: 200px;
         }
     </style>
 </head>
 
-<body>
-    <div class="wrapper d-flex align-items-stretch">
-        <nav id="sidebar">
-            <div class="custom-menu">
-                <button type="button" id="sidebarCollapse" class="btn btn-primary">
-                    <i class="fa fa-bars"></i>
-                    <span class="sr-only">Toggle Menu</span>
-                </button>
-            </div>
-            <div class="p-4 pt-5">
-                <h1><a href="/" class="logo">ExpenseWise</a></h1>
-                <ul class="list-unstyled components mb-5">
-                    <h6 class="sidebar-heading mt-4 mb-1 black-text">
-                        <i class="fa fa-dashboard"></i> Dashboard
-                    </h6>
-                    <li class="nav-item">
-                        <a class="nav-link p-2" href="{%url 'expenses'%}">
-                            <i class="fa fa-money"></i> Expenses
-                        </a>
-                    </li>
-                    <li class="nav-item p-2">
-                        <a class="nav-link" href="{%url 'income'%}">
-                            <i class="fa fa-plus-circle"></i> Income
-                        </a>
-                    </li>
-                    <li class="nav-item p-2">
-                        <a class="nav-link" href="{%url 'forecast'%}">
-                            <i class="fa fa-line-chart"></i> Forecast Expenses
-                        </a>
-                    </li>
-                    <li class="nav-item p-2">
-                        <a class="nav-link" href="{%url 'chatbot'%}">
-                            <i class="fa fa-comments"></i> Ask for Advice
-                        </a>
-                    </li>
+<body class="bg-gray-50">
+    <div class="antialiased bg-gray-50">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="fixed top-0 left-0 z-40 h-screen transition-width sidebar-expanded" aria-label="Sidebar">
+            <div class="h-full px-3 py-4 overflow-y-auto bg-white border-r border-gray-200">
+                <div class="flex items-center justify-between mb-5">
+                    <a href="{% url 'expenses' %}" class="text-xl font-bold text-gray-800 sidebar-content">WealthWizard</a>
+                    <div class="flex items-center gap-2 toggle-container">
+                        <button id="theme-toggle" class="p-2 rounded-lg hover:bg-gray-100 sidebar-content">
+                            <i class="fas fa-circle-half-stroke theme-icon"></i>
+                        </button>
+                        <button id="toggleSidebarBtn" class="p-2 rounded-lg hover:bg-gray-100">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="sidebar-content">
+                    <ul class="space-y-6">
+                        <!-- Dashboard Section -->
+                        <li>
+                            <h6 class="text-sm font-semibold text-gray-600 sidebar-header">
+                                <i class="fas fa-chart-line mr-2"></i> Dashboard
+                            </h6>
+                            <ul class="mt-2 space-y-2">
+                                <li>
+                                    <a href="{% url 'expenses' %}" class="flex items-center p-2 text-gray-700 rounded-lg hover:bg-gray-100">
+                                        <i class="fas fa-money-bill mr-3"></i>
+                                        <span>Expenses</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{% url 'income' %}" class="flex items-center p-2 text-gray-700 rounded-lg hover:bg-gray-100">
+                                        <i class="fas fa-plus-circle mr-3"></i>
+                                        <span>Income</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{% url 'forecast' %}" class="flex items-center p-2 text-gray-700 rounded-lg hover:bg-gray-100">
+                                        <i class="fas fa-chart-line mr-3"></i>
+                                        <span>Forecast Expenses</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{% url 'chatbot' %}" class="flex items-center p-2 text-gray-700 rounded-lg hover:bg-gray-100">
+                                        <i class="fas fa-comments mr-3"></i>
+                                        <span>Ask for Advice</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
 
-                    <h6 class="sidebar-heading mt-4 mb-1 black-text">
-                        <i class="fa fa-bar-chart"></i> SUMMARY
-                    </h6>
-                    <li class="nav-item">
-                        <a class="nav-link p-2" href="{%url 'stats'%}">
-                            <i class="fa fa-pie-chart"></i> Expense Summary
-                        </a>
-                    </li>
-                    <li class="nav-item p-2">
-                        <a class="nav-link" href="{%url 'income-summary'%}">
-                            <i class="fa fa-area-chart"></i> Income summary
-                        </a>
-                    </li>
-                    <li class="nav-item p-2">
-                        <a class="nav-link" href="{%url 'report'%}">
-                            <i class="fa fa-file-text"></i> Reports
-                        </a>
-                    </li>
-                    <li class="nav-item p-2">
-                        <a class="nav-link" href="{%url 'list_goals'%}">
-                            <i class="fa fa-flag"></i> Goals
-                        </a>
-                    </li>
+                        <!-- Summary Section -->
+                        <li>
+                            <h6 class="text-sm font-semibold text-gray-600 sidebar-header">
+                                <i class="fas fa-chart-pie mr-2"></i> Summary
+                            </h6>
+                            <ul class="mt-2 space-y-2">
+                                <li>
+                                    <a href="{% url 'stats' %}" class="flex items-center p-2 text-gray-700 rounded-lg hover:bg-gray-100">
+                                        <i class="fas fa-chart-pie mr-3"></i>
+                                        <span>Expense Summary</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{% url 'income-summary' %}" class="flex items-center p-2 text-gray-700 rounded-lg hover:bg-gray-100">
+                                        <i class="fas fa-chart-area mr-3"></i>
+                                        <span>Income Summary</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{% url 'report' %}" class="flex items-center p-2 text-gray-700 rounded-lg hover:bg-gray-100">
+                                        <i class="fas fa-file-alt mr-3"></i>
+                                        <span>Reports</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{% url 'list_goals' %}" class="flex items-center p-2 text-gray-700 rounded-lg hover:bg-gray-100">
+                                        <i class="fas fa-flag mr-3"></i>
+                                        <span>Goals</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
 
-                    <h6 class="sidebar-heading mt-4 mb-1 black-text">
-                        <i class="fa fa-cog"></i> Settings
-                    </h6>
-                    <li class="nav-item">
-                        <a class="nav-link p-2" href="{%url 'preferences'%}">
-                            <i class="fa fa-sliders"></i> General
-                        </a>
-                    </li>
-                    <li class="nav-item p-2">
-                        <a class="nav-link" href="{%url 'account' %}">
-                            <i class="fa fa-user"></i> Account
-                        </a>
-                    </li>
-                </ul>
+                        <!-- Settings Section -->
+                        <li>
+                            <h6 class="text-sm font-semibold text-gray-600 sidebar-header">
+                                <i class="fas fa-cog mr-2"></i> Settings
+                            </h6>
+                            <ul class="mt-2 space-y-2">
+                                <li>
+                                    <a href="{% url 'preferences' %}" class="flex items-center p-2 text-gray-700 rounded-lg hover:bg-gray-100">
+                                        <i class="fas fa-sliders-h mr-3"></i>
+                                        <span>General</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{% url 'account' %}" class="flex items-center p-2 text-gray-700 rounded-lg hover:bg-gray-100">
+                                        <i class="fas fa-user mr-3"></i>
+                                        <span>Account</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
             </div>
-        </nav>
+        </aside>
 
-        <div class="content">
-            {% include "navbar.html" %}
-            <div class="container-fluid">
-                {% block content %} {% endblock %}
+        <!-- Main Content -->
+        <main id="main-content" class="transition-width content-expanded min-h-screen bg-gray-50">
+            <!-- Navbar -->
+            <nav class="sticky top-0 z-30 bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+                <div class="px-3 py-3 lg:px-5 lg:pl-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white">
+                                {% block page_title %}Dashboard{% endblock %}
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <!-- Search -->
+                            <div class="hidden md:block">
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                        <i class="fas fa-search text-gray-400"></i>
+                                    </div>
+                                    <input type="text" 
+                                           class="block w-full p-2 pl-10 text-sm border border-gray-300 rounded-lg bg-gray-50 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" 
+                                           placeholder="Search...">
+                                </div>
+                            </div>
+
+                            <!-- Notifications -->
+                            <button type="button" 
+                                    class="relative p-2 text-gray-500 rounded-lg hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700"
+                                    id="notifications-dropdown-button">
+                                <i class="fas fa-bell"></i>
+                                <span class="absolute inline-flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-red-500 rounded-full navbar-notification-badge">
+                                    4
+                                </span>
+                            </button>
+
+                            <!-- User Menu -->
+                            <div class="relative">
+                                <button type="button" 
+                                        class="flex items-center gap-2 text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600" 
+                                        id="user-menu-button">
+                                    <img class="w-8 h-8 rounded-full" 
+                                         src="{% static 'images/placeholder-avatar.png' %}" 
+                                         alt="user photo">
+                                </button>
+                                <!-- User dropdown panel -->
+                                <div class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 dark:bg-gray-700"
+                                     id="user-dropdown">
+                                    <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600">Profile</a>
+                                    <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600">Settings</a>
+                                    <hr class="my-2 border-gray-200 dark:border-gray-600">
+                                    <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600">Sign out</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Page Content -->
+            <div class="p-4 sm:p-6">
+                {% block content %}{% endblock %}
             </div>
-        </div>
+        </main>
     </div>
 
-    <script src="{%static 'js/jquery.min.js' %}"></script>
-    <script src="{%static 'js/popper.js' %}"></script>
-    <script src="{%static 'js/bootstrap.min.js' %}"></script>
-    <script src="{%static 'js/main2.js' %}"></script>
-    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
-        integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"
-        crossorigin="anonymous"></script>
+    <!-- Flowbite JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.js"></script>
+    
+    <!-- Custom JavaScript -->
     <script>
-        window.jQuery ||
-            document.write(
-                '<script src="/docs/4.4/static/js/vendor/jquery.slim.min.js"><\/script>'
-            );
-    </script>
-    <script>
-        {% block js %}
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sidebar Toggle Logic
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('main-content');
+            const toggleBtn = document.getElementById('toggleSidebarBtn');
+            const sidebarContent = document.querySelectorAll('.sidebar-content');
 
-        {% endblock js %}
-    </script>
-    <script src="/docs/5.3/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
-        crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.9.0/feather.min.js"></script>
-    <script src="{% static 'js/main.js' %}"></script>
-</body>
+            toggleBtn.addEventListener('click', function() {
+                sidebar.classList.toggle('sidebar-collapsed');
+                sidebar.classList.toggle('sidebar-expanded');
+                mainContent.classList.toggle('content-collapsed');
+                mainContent.classList.toggle('content-expanded');
+                
+                sidebarContent.forEach(content => {
+                    content.classList.toggle('hidden');
+                });
+            });
 
-</html>
+            // Theme Toggle Logic
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const html = document.documentElement;
+
+            // Check for saved theme preference
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                html.classList.toggle('dark', savedTheme === 'dark');
+            }
+
+            themeToggleBtn.addEventListener('click', function() {
+                html.classList.toggle('dark');
+                localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+            });
+
+            // User Dropdown Toggle
+            const userMenuButton = document.getElementById('user-menu-button');
+            const userDropdown = document.getElementById('user-dropdown');
+
+            userMenuButton.addEventListener('click', function() {
+                userDropdown.classList.toggle('hidden');
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!userMenuButton.contains(event.target) && !userDropdown.contains(event.target)) {
+                    userDropdown.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+
+    <!-- Chart.js -->
+    <script src="https://
