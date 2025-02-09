@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="fy-hero fy-bg-gradient-primary">
+    <div class="fy-container fy-text-center">
+        <h1 class="fy-heading-1 fy-mb-4">Master Your Money with Smart Finance Tracking</h1>
+        <p class="fy-text-lg fy-mb-8">Your all-in-one solution for expense tracking, budgeting, and achieving financial goals with AI-powered insights</p>
+        <div class="fy-button-group">
+            <a href="{% url 'register' %}" class="fy-button-primary">Get Started Free</a>
+            <button class="fy-button-secondary" data-fy-modal="demo">Watch Demo</button>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<section class="fy-section">
+    <div class="fy-container">
+        <h2 class="fy-heading-2 fy-text-center fy-mb-8">Everything You Need to Take Control</h2>
+        <div class="fy-grid fy-grid-cols-3 fy-gap-6">
+            <!-- Expense Tracking -->
+            <div class="fy-card">
+                <div class="fy-card-icon">
+                    <i class="fy-icon-chart"></i>
+                </div>
+                <h3 class="fy-card-title">Expense Tracking</h3>
+                <p class="fy-card-text">Track every penny with automatic categorization and real-time insights into your spending patterns.</p>
+            </div>
+
+            <!-- Smart Categories -->
+            <div class="fy-card">
+                <div class="fy-card-icon">
+                    <i class="fy-icon-category"></i>
+                </div>
+                <h3 class="fy-card-title">Smart Categories</h3>
+                <p class="fy-card-text">Auto-categorize expenses and customize categories to match your unique financial lifestyle.</p>
+            </div>
+
+            <!-- Goal Setting -->
+            <div class="fy-card">
+                <div class="fy-card-icon">
+                    <i class="fy-icon-target"></i>
+                </div>
+                <h3 class="fy-card-title">Goal Setting</h3>
+                <p class="fy-card-text">Set and track financial goals with intelligent progress monitoring and recommendations.</p>
+            </div>
+
+            <!-- AI Assistant -->
+            <div class="fy-card">
+                <div class="fy-card-icon">
+                    <i class="fy-icon-chat"></i>
+                </div>
+                <h3 class="fy-card-title">AI Finance Assistant</h3>
+                <p class="fy-card-text">Get instant answers about your finances from our AI-powered chatbot available 24/7.</p>
+            </div>
+
+            <!-- Custom Reports -->
+            <div class="fy-card">
+                <div class="fy-card-icon">
+                    <i class="fy-icon-download"></i>
+                </div>
+                <h3 class="fy-card-title">Custom Reports</h3>
+                <p class="fy-card-text">Generate and download detailed financial reports and beautiful visualizations anytime.</p>
+            </div>
+
+            <!-- Income Monitoring -->
+            <div class="fy-card">
+                <div class="fy-card-icon">
+                    <i class="fy-icon-wallet"></i>
+                </div>
+                <h3 class="fy-card-title">Income Monitoring</h3>
+                <p class="fy-card-text">Track multiple income streams and analyze your earning patterns over time.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Benefits Section -->
+<section class="fy-section fy-bg-light">
+    <div class="fy-container">
+        <h2 class="fy-heading-2 fy-text-center fy-mb-8">Why Choose Our Platform?</h2>
+        <div class="fy-grid fy-grid-cols-2 fy-gap-8">
+            <div class="fy-benefits-list">
+                <div class="fy-benefit-item">
+                    <i class="fy-icon-check"></i>
+                    <span>Real-time synchronization across all your devices</span>
+                </div>
+                <div class="fy-benefit-item">
+                    <i class="fy-icon-check"></i>
+                    <span>Bank-grade security to protect your financial data</span>
+                </div>
+                <div class="fy-benefit-item">
+                    <i class="fy-icon-check"></i>
+                    <span>Smart insights to help you save more money</span>
+                </div>
+                <div class="fy-benefit-item">
+                    <i class="fy-icon-check"></i>
+                    <span>Personalized recommendations based on your spending</span>
+                </div>
+                <div class="fy-benefit-item">
+                    <i class="fy-icon-check"></i>
+                    <span>24/7 AI-powered support for all your questions</span>
+                </div>
+            </div>
+            <div class="fy-demo-container">
+                <img src="{% static 'images/app-demo.png' %}" alt="App Demo" class="fy-demo-image">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="fy-section">
+    <div class="fy-container fy-text-center">
+        <h2 class="fy-heading-2 fy-mb-4">Start Your Financial Journey Today</h2>
+        <p class="fy-text-lg fy-mb-8">Join thousands of users who have already transformed their financial lives</p>
+        <a href="{% url 'register' %}" class="fy-button-primary fy-button-lg">Sign Up Now - It's Free</a>
+    </div>
+</section>
+
+<!-- Demo Modal -->
+<div class="fy-modal" id="demo">
+    <div class="fy-modal-content">
+        <h3 class="fy-modal-title">Watch Demo</h3>
+        <div class="fy-modal-body">
+            <video class="fy-video" controls>
+                <source src="{% static 'videos/demo.mp4' %}" type="video/mp4">
+            </video>
+        </div>
+        <button class="fy-modal-close">Close</button>
+    </div>
+</div>
+{% endblock %}
