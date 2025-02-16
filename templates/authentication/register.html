@@ -2,14 +2,28 @@
 {% load static %}
 
 {% block content %}
-<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8 bg-gray-800 p-8 rounded-lg shadow-xl card-hover">
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gray-900">
+    <!-- Decorative Elements -->
+    <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-10">
+        <svg class="absolute top-0 right-0 w-1/3 h-auto" viewBox="0 0 100 100">
+            <circle cx="90" cy="10" r="40" fill="currentColor" class="text-blue-500"/>
+        </svg>
+        <svg class="absolute bottom-0 left-0 w-1/3 h-auto" viewBox="0 0 100 100">
+            <circle cx="10" cy="90" r="40" fill="currentColor" class="text-blue-500"/>
+        </svg>
+    </div>
+
+    <div class="max-w-md w-full space-y-8 bg-gray-800 p-8 rounded-lg shadow-xl card-hover relative z-10">
         <!-- Header -->
         <div class="text-center">
+            <div class="mb-4">
+                <i class="fas fa-user-plus text-5xl text-blue-400"></i>
+            </div>
             <h2 class="text-3xl font-bold text-gray-100 mb-2">
                 Create Account
             </h2>
-            <p class="text-gray-400">
+            <p class="text-gray-400 flex items-center justify-center">
+                <i class="fas fa-chart-line mr-2"></i>
                 Join us today and start managing your expenses
             </p>
         </div>
@@ -26,7 +40,7 @@
                 <label for="usernameField" class="sr-only">Username</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i class="fas fa-user text-gray-400"></i>
+                        <i class="fas fa-user-circle text-gray-400"></i>
                     </div>
                     <input 
                         id="usernameField"
@@ -39,8 +53,14 @@
                     />
                 </div>
                 <!-- Username Feedback -->
-                <div class="invalid_feedback mt-1 text-sm text-red-400" style="display:none"></div>
-                <p class="usernameSuccessOutput mt-1 text-sm text-green-400"></p>
+                <div class="invalid_feedback mt-1 text-sm text-red-400" style="display:none">
+                    <i class="fas fa-exclamation-circle mr-1"></i>
+                    <span></span>
+                </div>
+                <p class="usernameSuccessOutput mt-1 text-sm text-green-400">
+                    <i class="fas fa-check-circle mr-1"></i>
+                    <span></span>
+                </p>
             </div>
 
             <!-- Email Field -->
@@ -61,7 +81,10 @@
                     />
                 </div>
                 <!-- Email Feedback -->
-                <div class="emailFeedBackArea mt-1 text-sm text-red-400" style="display:none"></div>
+                <div class="emailFeedBackArea mt-1 text-sm text-red-400" style="display:none">
+                    <i class="fas fa-exclamation-circle mr-1"></i>
+                    <span></span>
+                </div>
             </div>
 
             <!-- Password Field -->
@@ -69,7 +92,7 @@
                 <label for="passwordField" class="sr-only">Password</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i class="fas fa-lock text-gray-400"></i>
+                        <i class="fas fa-key text-gray-400"></i>
                     </div>
                     <input 
                         id="passwordField"
@@ -83,7 +106,7 @@
                         type="button"
                         class="showPasswordToggle absolute inset-y-0 right-0 pr-3 flex items-center text-sm text-gray-400 hover:text-gray-300 focus:outline-none"
                     >
-                        SHOW
+                        <i class="fas fa-eye"></i>
                     </button>
                 </div>
             </div>
@@ -93,12 +116,16 @@
                 type="submit"
                 class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 submit-btn"
             >
+                <i class="fas fa-user-plus mr-2"></i>
                 Create Account
             </button>
 
             <!-- Sign In Link -->
             <div class="text-center text-sm">
-                <span class="text-gray-400">Already have an account?</span>
+                <span class="text-gray-400">
+                    <i class="fas fa-sign-in-alt mr-1"></i>
+                    Already have an account?
+                </span>
                 <a href="{% url 'login' %}" class="ml-1 text-blue-400 hover:text-blue-300">
                     Sign in
                 </a>
