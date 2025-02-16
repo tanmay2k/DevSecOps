@@ -1,273 +1,194 @@
 {% extends "base.html" %}
 {% load static %}
 
-<!-- Custom fonts for this template-->
 {% block link %}
-
-<link href="{%static 'css/all.min.css'%}" rel="stylesheet" type="text/css">
-<link
-    href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
-    rel="stylesheet">
-
-<!-- Custom styles for this template-->
-<link href="{%static 'css/sb-admin-2.min.css %'}" rel="stylesheet">
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
+<!-- Flowbite CSS -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.css" rel="stylesheet">
+<!-- FontAwesome -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+<!-- Custom styles -->
+<style>
+    :root {
+        color-scheme: light dark;
+    }
+    
+    .dark .dark\:bg-gray-800 {
+        background-color: var(--tw-gray-800);
+    }
+    
+    .dark .dark\:text-white {
+        color: var(--tw-text-white);
+    }
+</style>
 {% endblock link %}
 
 {% block content %}
+<div class="p-4 sm:ml-64">
+    <!-- Page Header -->
+    <div class="flex items-center justify-between mb-4">
+        <h1 class="text-2xl font-semibold dark:text-white">Dashboard</h1>
+        <a href="{% url 'report' %}" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+            <i class="fas fa-download mr-2"></i> Generate Report
+        </a>
+    </div>
 
-
-
-<body id="page-top">
-
-    <!-- Page Wrapper -->
-    <div id="wrapper">
-
-
-
-        <!-- Content Wrapper -->
-        <div id="content-wrapper" class="d-flex flex-column">
-
-            <!-- Main Content -->
-            <div id="content">
-
-                <!-- Topbar -->
-
-                <!-- End of Topbar -->
-
-                <!-- Begin Page Content -->
-                <div class="container-fluid">
-
-                    <!-- Page Heading -->
-                    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-                        <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
-                        <a href="{%url 'report'%}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
-                                class="fas fa-download fa-sm text-white-50"></i> Generate Report</a>
-                    </div>
-
-                    <!-- Content Row -->
-                    <div class="row">
-
-                        <!-- Earnings (Monthly) Card Example -->
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-primary shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                                Earnings (Daily)</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">&#8377; {{daily_income}}
-                                            </div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Earnings (Monthly) Card Example -->
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-success shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                                Earnings (Weekly)</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">&#8377;
-                                                {{weekly_income}}</div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Earnings (Monthly) Card Example -->
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-info shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Earnings
-                                                (Monthly)
-                                            </div>
-                                            <div class="row no-gutters align-items-center">
-                                                <div class="col-auto">
-                                                    <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">&#8377;
-                                                        {{monthly_income}}</div>
-                                                </div>
-                                                <div class="col">
-                                                    <div class="progress progress-sm mr-2">
-                                                        <div class="progress-bar bg-info" role="progressbar"
-                                                            style="width: 50%" aria-valuenow="50" aria-valuemin="0"
-                                                            aria-valuemax="100"></div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Pending Requests Card Example -->
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-warning shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                                Earnings (Yearly)</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">&#8377;
-                                                {{yearly_income}}</div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-comments fa-2x text-gray-300"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Content Row -->
-
-                    <div class="row justify-content-center">
-
-                        <!-- Area Chart -->
-                        <div class="col-xl-8 col-lg-7">
-                            <div class="card shadow mb-4">
-                                <!-- Card Header - Dropdown -->
-                                <div
-                                    class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                    <h6 class="m-0 font-weight-bold text-primary">Earnings Overview</h6>
-                                    <div class="dropdown no-arrow">
-                                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
-                                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
-                                        </a>
-                                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
-                                            aria-labelledby="dropdownMenuLink">
-                                            <div class="dropdown-header">Dropdown Header:</div>
-                                            <a class="dropdown-item" href="#">Action</a>
-                                            <a class="dropdown-item" href="#">Another action</a>
-                                            <div class="dropdown-divider"></div>
-                                            <a class="dropdown-item" href="#">Something else here</a>
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- Card Body -->
-                                <div class="card-body">
-                                    <div class="chart-area">
-                                        <canvas id="myAreaChart" data-url="{% url 'monthly_income_data' %}"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Pie Chart -->
-                        <!-- <div class="col-xl-4 col-lg-5">
-                            <div class="card shadow mb-4">
-                                <div
-                                    class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                    <h6 class="m-0 font-weight-bold text-primary">Revenue Sources</h6>
-                                    <div class="dropdown no-arrow">
-                                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
-                                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
-                                        </a>
-                                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
-                                            aria-labelledby="dropdownMenuLink">
-                                            <div class="dropdown-header">Dropdown Header:</div>
-                                            <a class="dropdown-item" href="#">Action</a>
-                                            <a class="dropdown-item" href="#">Another action</a>
-                                            <div class="dropdown-divider"></div>
-                                            <a class="dropdown-item" href="#">Something else here</a>
-                                        </div>
-                                    </div>
-                                </div>
-                             
-                                <div class="card-body">
-                                    <div class="chart-pie pt-4 pb-2">
-                                        <canvas id="myPieChart"></canvas>
-                                    </div>
-                                    <div class="mt-4 text-center small">
-                                        <span class="mr-2">
-                                            <i class="fas fa-circle text-primary"></i> JOB
-                                        </span>
-                                        <span class="mr-2">
-                                            <i class="fas fa-circle text-success"></i> FREELANCING
-                                        </span>
-                                        <span class="mr-2">
-                                            <i class="fas fa-circle text-info"></i> SHAREMARKET
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div> -->
-
-
-
-                    </div>
-                    <!-- End of Content Wrapper -->
-
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        <!-- Daily Earnings Card -->
+        <div class="p-4 bg-white rounded-lg shadow dark:bg-gray-800">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Daily Earnings</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">₹{{ daily_income }}</p>
                 </div>
-                <!-- End of Page Wrapper -->
+                <div class="p-3 bg-blue-100 rounded-full dark:bg-blue-900">
+                    <i class="fas fa-calendar text-blue-500 dark:text-blue-300"></i>
+                </div>
+            </div>
+        </div>
 
-                <!-- Scroll to Top Button-->
-                <a class="scroll-to-top rounded" href="#page-top">
-                    <i class="fas fa-angle-up"></i>
-                </a>
+        <!-- Weekly Earnings Card -->
+        <div class="p-4 bg-white rounded-lg shadow dark:bg-gray-800">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Weekly Earnings</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">₹{{ weekly_income }}</p>
+                </div>
+                <div class="p-3 bg-green-100 rounded-full dark:bg-green-900">
+                    <i class="fas fa-dollar-sign text-green-500 dark:text-green-300"></i>
+                </div>
+            </div>
+        </div>
 
-                <!-- Logout Modal-->
+        <!-- Monthly Earnings Card -->
+        <div class="p-4 bg-white rounded-lg shadow dark:bg-gray-800">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Monthly Earnings</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">₹{{ monthly_income }}</p>
+                </div>
+                <div class="p-3 bg-cyan-100 rounded-full dark:bg-cyan-900">
+                    <i class="fas fa-clipboard-list text-cyan-500 dark:text-cyan-300"></i>
+                </div>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mt-4 dark:bg-gray-700">
+                <div class="bg-cyan-600 h-2.5 rounded-full dark:bg-cyan-500" style="width: 50%"></div>
+            </div>
+        </div>
 
-                <script src="{%static 'js/jquery.min.js'%}"></script>
-                <script src="{%static 'js/bootstrap.bundle.min.js' %}"></script>
+        <!-- Yearly Earnings Card -->
+        <div class="p-4 bg-white rounded-lg shadow dark:bg-gray-800">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Yearly Earnings</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">₹{{ yearly_income }}</p>
+                </div>
+                <div class="p-3 bg-yellow-100 rounded-full dark:bg-yellow-900">
+                    <i class="fas fa-chart-bar text-yellow-500 dark:text-yellow-300"></i>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                <!-- Core plugin JavaScript-->
-                <script src="{%static 'js/jquery.easing.min.js' %}"></script>
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-1 gap-4">
+        <!-- Area Chart -->
+        <div class="p-4 bg-white rounded-lg shadow dark:bg-gray-800">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Earnings Overview</h3>
+                <button data-dropdown-toggle="earnings-dropdown" class="p-2 text-gray-500 rounded-lg hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700">
+                    <i class="fas fa-ellipsis-v"></i>
+                </button>
+                <!-- Dropdown menu -->
+                <div id="earnings-dropdown" class="hidden z-10 w-44 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600">
+                    <ul class="py-1 text-sm text-gray-700 dark:text-gray-200">
+                        <li>
+                            <a href="#" class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Export Data</a>
+                        </li>
+                        <li>
+                            <a href="#" class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Share Report</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="relative">
+                <canvas id="myAreaChart" data-url="{% url 'monthly_income_data' %}" class="w-full h-72"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
 
-                <!-- Custom scripts for all pages-->
-                <script src="{%static 'js/sb-admin-2.min.js' %}"></script>
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-                <!-- Page level plugins -->
-                <script src="{%static 'js/Chart.min.js' %}"></script>
+<!-- Custom Chart Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('myAreaChart');
+    const url = ctx.getAttribute('data-url');
 
-                <!-- Page level custom scripts -->
-                <script src="{% static 'js/chart-area-demo.js' %}"></script>
-                <script src="{% static 'js/chart-pie-demo.js' %}"></script>
-                <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-                <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-                <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
-                <!-- The rest of your script includes... -->
+    // Theme-aware chart configuration
+    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const textColor = isDarkMode ? '#fff' : '#666';
+    const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
 
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [], // Will be populated with months
+            datasets: [{
+                label: 'Monthly Earnings',
+                fill: true,
+                backgroundColor: isDarkMode ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.1)',
+                borderColor: '#3b82f6',
+                tension: 0.4,
+                data: [] // Will be populated with income data
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: textColor
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    ticks: { color: textColor },
+                    grid: { color: gridColor }
+                },
+                x: {
+                    ticks: { color: textColor },
+                    grid: { color: gridColor }
+                }
+            }
+        }
+    });
 
+    // Fetch and update chart data
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            chart.data.datasets[0].data = data.monthly_income_data;
+            chart.data.labels = data.months || Array.from({length: data.monthly_income_data.length}, (_, i) => `Month ${i + 1}`);
+            chart.update();
+        })
+        .catch(error => console.error("Error fetching data:", error));
 
-                {% endblock content %}
-                {% block js %}
-                // Get the canvas element
-                var ctx = document.getElementById("myAreaChart");
-                var url = ctx.getAttribute('data-url'); // Get the data URL from the canvas element
-
-                // Fetch the monthly income data using AJAX
-                fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                var monthlyIncomeData = data.monthly_income_data;
-
-                // Update the chart with the fetched data
-                myLineChart.data.datasets[0].data = monthlyIncomeData;
-                myLineChart.update();
-                })
-                .catch(error => console.error("Error fetching data:", error));
-
-                {% endblock js %}
+    // Handle system theme changes
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+        const isDark = e.matches;
+        chart.options.scales.y.ticks.color = isDark ? '#fff' : '#666';
+        chart.options.scales.x.ticks.color = isDark ? '#fff' : '#666';
+        chart.options.scales.y.grid.color = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+        chart.options.scales.x.grid.color = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+        chart.options.plugins.legend.labels.color = isDark ? '#fff' : '#666';
+        chart.update();
+    });
+});
+</script>
+{% endblock content %}

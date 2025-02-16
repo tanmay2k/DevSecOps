@@ -1,122 +1,181 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Expense Report</title>
+    
+    <!-- Flowbite CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    
     <style>
+        :root {
+            color-scheme: light dark;
+        }
+        
         .logo {
-            font-weight: bolder;
-            color: green;
-            text-align: center;
-            font-size: x-large;
+            font-weight: 700;
+            color: var(--primary-color, #10B981);
         }
-
-        th {
-            text-align: left;
+        
+        .dark .status-positive {
+            color: #34D399;
         }
-
-        h2 {
-            text-decoration: underline;
+        
+        .dark .status-neutral {
+            color: #FBBF24;
+        }
+        
+        .dark .status-negative {
+            color: #EF4444;
+        }
+        
+        .light .status-positive {
+            color: #059669;
+        }
+        
+        .light .status-neutral {
+            color: #D97706;
+        }
+        
+        .light .status-negative {
+            color: #DC2626;
         }
     </style>
-
-    <!-- Include Bootstrap CSS via CDN -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
 </head>
 
-<body>
-    <div class="container">
-        <div class="text-center">
-            <h1 class="display-4 logo">WealthWizard</h1>
-            <h1 class="display-4">Expense Report</h1>
+<body class="bg-white dark:bg-gray-900">
+    <div class="container mx-auto px-4 py-8">
+        <div class="text-center mb-8">
+            <h1 class="logo text-4xl mb-2">
+                <i class="fas fa-chart-line mr-2"></i>WealthWizard
+            </h1>
+            <h2 class="text-3xl font-bold text-gray-900 dark:text-white">Expense Report</h2>
         </div>
 
         {% if incomes %}
-        <!-- Income Table -->
-        <h2>Total Income:</h2>
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Source</th>
-                    <th>Amount</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for income in incomes %}
-                <tr>
-                    <td>{{ income.date }}</td>
-                    <td>{{ income.source }}</td>
-                    <td> {{ income.amount }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <!-- Income Section -->
+        <div class="mb-8">
+            <h3 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+                <i class="fas fa-money-bill-trend-up mr-2"></i>Total Income
+            </h3>
+            <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+                <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">Date</th>
+                            <th scope="col" class="px-6 py-3">Source</th>
+                            <th scope="col" class="px-6 py-3">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for income in incomes %}
+                        <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                            <td class="px-6 py-4">{{ income.date }}</td>
+                            <td class="px-6 py-4">{{ income.source }}</td>
+                            <td class="px-6 py-4">{{ income.amount }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
         {% endif %}
 
         {% if expenses %}
-        <!-- Expense Table -->
-        <h2>Total Expenses:</h2>
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Category</th>
-                    <th>Amount</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for expense in expenses %}
-                <tr>
-                    <td>{{ expense.date }}</td>
-                    <td>{{ expense.category }}</td>
-                    <td> {{ expense.amount }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <!-- Expenses Section -->
+        <div class="mb-8">
+            <h3 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+                <i class="fas fa-receipt mr-2"></i>Total Expenses
+            </h3>
+            <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+                <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">Date</th>
+                            <th scope="col" class="px-6 py-3">Category</th>
+                            <th scope="col" class="px-6 py-3">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for expense in expenses %}
+                        <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                            <td class="px-6 py-4">{{ expense.date }}</td>
+                            <td class="px-6 py-4">{{ expense.category }}</td>
+                            <td class="px-6 py-4">{{ expense.amount }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
         {% endif %}
 
         {% if total_income is not None and total_expense is not None %}
-        <!-- Savings Calculation -->
-        <h2>Savings:</h2>
-        <table class="table table-bordered">
-            <tbody>
-                <tr>
-                    <td>Total Income:</td>
-                    <td> {{ total_income }}</td>
-                </tr>
-                <tr>
-                    <td>Total Expenses:</td>
-                    <td> {{ total_expense }}</td>
-                </tr>
-                <tr>
-                    <td>Total Savings:</td>
-                    <td> {{ savings }}</td>
-                </tr>
-                <tr>
-                    <td>Status:</td>
-                    <td>
-                        {% if savings > 0 %}
-                        <p style="color: green;"> You saved money this period.</p>
-                        {% elif savings == 0 %}
-                        <p style="color: yellow;"> Your income and expenses balanced.</p>
-                        {% else %}
-                        <p style="color: red;"> You exceeded your expenses than your income this period.</p>
-                        {% endif %}
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+        <!-- Summary Section -->
+        <div class="mb-8">
+            <h3 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+                <i class="fas fa-piggy-bank mr-2"></i>Summary
+            </h3>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="p-6 bg-white rounded-lg border border-gray-200 shadow-md dark:bg-gray-800 dark:border-gray-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <h5 class="text-xl font-bold text-gray-900 dark:text-white">Total Income</h5>
+                        <span class="text-2xl font-semibold text-gray-900 dark:text-white">{{ total_income }}</span>
+                    </div>
+                    <div class="flex items-center justify-between mb-4">
+                        <h5 class="text-xl font-bold text-gray-900 dark:text-white">Total Expenses</h5>
+                        <span class="text-2xl font-semibold text-gray-900 dark:text-white">{{ total_expense }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <h5 class="text-xl font-bold text-gray-900 dark:text-white">Total Savings</h5>
+                        <span class="text-2xl font-semibold text-gray-900 dark:text-white">{{ savings }}</span>
+                    </div>
+                </div>
+                
+                <div class="p-6 bg-white rounded-lg border border-gray-200 shadow-md dark:bg-gray-800 dark:border-gray-700">
+                    <h5 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Status</h5>
+                    {% if savings > 0 %}
+                    <div class="flex items-center">
+                        <i class="fas fa-circle-check text-3xl mr-2 status-positive"></i>
+                        <p class="status-positive">You saved money this period!</p>
+                    </div>
+                    {% elif savings == 0 %}
+                    <div class="flex items-center">
+                        <i class="fas fa-circle-minus text-3xl mr-2 status-neutral"></i>
+                        <p class="status-neutral">Your income and expenses balanced.</p>
+                    </div>
+                    {% else %}
+                    <div class="flex items-center">
+                        <i class="fas fa-circle-exclamation text-3xl mr-2 status-negative"></i>
+                        <p class="status-negative">Your expenses exceeded your income this period.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
         {% endif %}
     </div>
 
-    <!-- Include Bootstrap JavaScript via CDN -->
-    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <!-- JavaScript Dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
+    <script>
+        // Check system theme preference
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.body.classList.add('dark');
+        }
+        
+        // Listen for system theme changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            if (e.matches) {
+                document.body.classList.add('dark');
+            } else {
+                document.body.classList.remove('dark');
+            }
+        });
+    </script>
 </body>
-
 </html>
