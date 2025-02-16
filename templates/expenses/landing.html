@@ -77,7 +77,7 @@
                         <i class="fas fa-sun icon"></i>
                     </div>
                 </div>
-                <button type="button" class="text-white bg-blue-600 hover:bg-blue-700 font-medium rounded-lg text-sm px-4 py-2">
+                <button type="button"  onclick="location.href = '{% url "login" %}'" class="text-white bg-blue-600 hover:bg-blue-700 font-medium rounded-lg text-sm px-4 py-2">
                     Get Started
                 </button>
             </div>
@@ -94,8 +94,8 @@
                 <p class="max-w-2xl mb-6 font-light text-gray-300 lg:mb-8 md:text-lg lg:text-xl">
                     Automatically categorize expenses, forecast future spending, and achieve your financial goals with AI-powered insights
                 </p>
-                <a href="#" class="inline-flex items-center justify-center px-5 py-3 mr-3 text-base font-medium text-center text-white rounded-lg bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-800">
-                    Start Free Trial
+                <a href="{% url 'register' %}" class="inline-flex items-center justify-center px-5 py-3 mr-3 text-base font-medium text-center text-white rounded-lg bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-800">
+                    Register
                     <i class="fas fa-arrow-right ml-2"></i>
                 </a>
             </div>
