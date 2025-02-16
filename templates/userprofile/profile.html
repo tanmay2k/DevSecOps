@@ -1,109 +1,113 @@
 {% extends "base.html" %}
+
 {% block css %}
 <style>
-    .container {
-        height: 100vh;
-        width: 80%;
-        margin: auto;
-        display: flex;
-        justify-content: space-between;
+    /* Custom styles for specific adjustments */
+    .form-grid {
+        display: grid;
+        gap: 1rem;
     }
-
-    .form {
-        height: 100%;
-        width: 50%;
-        padding: 20px;
-        margin: 5%;
-
+    
+    /* Base form input styles */
+    .form-input {
+        @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white;
     }
-
-    .form1 {
-        height: 50%;
-        width: 50%;
-        padding: 20px;
-        margin: 5%;
-        margin-top: 15%;
-
-    }
-
-
-    h3 {
-        padding: 20px;
-    }
-
-    .message {
-        margin-bottom: 30px;
-        padding: 10px;
-        padding-left: 0;
-    }
-
-    .label {
-        margin-right: 20px;
-        height: auto;
-        min-width: 100px;
-        display: inline-block;
-        margin: auto;
-    }
-
-    .danger {
-        margin: 10px;
-    }
-
-    @media (max-width:850px) {
-        .container {
-            display: block;
+    
+    @media (max-width: 768px) {
+        .form-container {
+            flex-direction: column;
         }
-
-        .form,
-        .form1 {
-            height: 65%;
+        
+        .form-section {
             width: 100%;
-            border: 2px solid red;
+            margin: 1rem 0;
         }
-
-
     }
 </style>
 {% endblock css %}
 
 {% block content %}
-<div class="container">
+<div class="container mx-auto px-4 py-8">
+    <div class="flex flex-col md:flex-row gap-8 form-container">
+        <!-- Main Profile Form Section -->
+        <div class="flex-1 form-section">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                {% if messages %}
+                <div class="mb-6">
+                    {% for message in messages %}
+                    <div {% if message.tags %} 
+                        class="p-4 mb-4 text-sm {% if message.tags == 'success' %}text-green-800 bg-green-50 dark:bg-gray-800 dark:text-green-400{% elif message.tags == 'error' %}text-red-800 bg-red-50 dark:bg-gray-800 dark:text-red-400{% else %}text-blue-800 bg-blue-50 dark:bg-gray-800 dark:text-blue-400{% endif %} rounded-lg"
+                        {% endif %}>
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
 
-    <form action="" class="form" method="post">
-        {% if messages %}
-        <div class="message">
+                <h3 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
+                    Welcome {{ request.user.username|capfirst }}!
+                </h3>
 
-            {% for message in messages %}
-            <div {% if message.tags %} class="alert-{{message.tags}}" {% endif %}>{{message}}</div>
-            {% endfor %}
+                <form action="" method="post" class="form-grid">
+                    {% csrf_token %}
+                    {% for field in form %}
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            {{ field.label }}
+                        </label>
+                        <div class="mt-1">
+                            {{ field }}
+                        </div>
+                        {% if field.errors %}
+                        <p class="mt-2 text-sm text-red-600 dark:text-red-500">
+                            {{ field.errors|striptags }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+
+                    <button type="submit" 
+                        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
+                        <i class="fas fa-user-edit mr-2"></i>Update Profile
+                    </button>
+                </form>
+            </div>
         </div>
 
-        {% endif %}
-        <h3>Welcome {{request.user.username|capfirst}} !</h3>
+        <!-- Income Sources Section -->
+        <div class="md:w-1/3 form-section">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                <h3 class="text-xl font-bold mb-6 text-gray-900 dark:text-white">
+                    <i class="fas fa-money-bill-wave mr-2"></i>Income Sources
+                </h3>
 
+                <form action="{% url 'addSource' %}" method="POST" class="mb-6">
+                    {% csrf_token %}
+                    <div class="flex gap-2">
+                        <input type="text" 
+                            name="Source" 
+                            placeholder="Enter source name" 
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                            required>
+                        <button type="submit" 
+                            class="text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-green-600 dark:hover:bg-green-700 focus:outline-none dark:focus:ring-green-800">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </form>
 
-        {% csrf_token %}
-        <table>
-            {% for fm in form %}
-            <p class="label"> {{fm.label_tag}} </p> {{fm}} <span class="alert-danger danger"> {{fm.errors|striptags}}
-            </span><br><br>
-            {% endfor %}
-        </table>
-        <input type="submit" class="btn btn-primary" value="Update">
-
-    </form>
-
-    <div class="form1">
-        <form action="{%url 'addSource'%}" method="POST">
-            {% csrf_token %}
-            <div> Add Income Sources : </div>
-            <input type="text" placeholder="Source" name="Source">
-            <input type="submit" class="btn btn-primary m-2">
-        </form>
-        <div>
-            {% for source in sources %}
-            <li class="list">{{source}} <a href="{%url 'deleteSource' source.id%}"> Delete</a></li>
-            {% endfor %}
+                <ul class="space-y-2">
+                    {% for source in sources %}
+                    <li class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <span class="text-gray-700 dark:text-gray-300">{{ source }}</span>
+                        <a href="{% url 'deleteSource' source.id %}" 
+                            class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+                            <i class="fas fa-trash-alt"></i>
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
         </div>
     </div>
 </div>
