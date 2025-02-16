@@ -1,29 +1,114 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container p-5">
-    <h2>Add Goal</h2>
-    <form method="post">
-        {% csrf_token %}
-        <div class="form-group mt-4">
-            <label for="{{ form.name.id_for_label }}">Goal Name</label>
-            {{ form.name }}
-        </div>
-        <div class="form-row">
-            <div class="form-group col-md-6">
-                <label for="{{ form.start_date.id_for_label }}">Start Date</label>
-                <input type="date" class="form-control" name="start_date" />
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div class="max-w-2xl mx-auto px-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+            <!-- Header -->
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Add Goal</h2>
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Set up a new savings goal with target amount and timeline.</p>
             </div>
-            <div class="form-group col-md-6">
-                <label for="{{ form.end_date.id_for_label }}">End Date</label>
-                <input type="date" class="form-control" name="end_date" />
-            </div>
+
+            <!-- Form -->
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- Goal Name -->
+                <div>
+                    <label for="id_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Goal Name
+                    </label>
+                    <input 
+                        type="text" 
+                        name="name" 
+                        id="id_name" 
+                        required
+                        class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-3 text-sm text-gray-900 dark:text-gray-100 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
+                    >
+                </div>
+
+                <!-- Dates -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Start Date -->
+                    <div>
+                        <label for="id_start_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Start Date
+                        </label>
+                        <input 
+                            type="date" 
+                            name="start_date"
+                            id="id_start_date"
+                            required
+                            class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-3 text-sm text-gray-900 dark:text-gray-100 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
+                        />
+                    </div>
+
+                    <!-- End Date -->
+                    <div>
+                        <label for="id_end_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            End Date
+                        </label>
+                        <input 
+                            type="date" 
+                            name="end_date"
+                            id="id_end_date"
+                            required
+                            class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-3 text-sm text-gray-900 dark:text-gray-100 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
+                        />
+                    </div>
+                </div>
+
+                <!-- Amount to Save -->
+                <div>
+                    <label for="id_amount_to_save" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Amount to Save
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">$</span>
+                        <input 
+                            type="number" 
+                            name="amount_to_save" 
+                            id="id_amount_to_save"
+                            required
+                            min="0"
+                            step="0.01"
+                            class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 pl-8 pr-4 py-3 text-sm text-gray-900 dark:text-gray-100 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
+                        >
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="flex justify-end">
+                    <button 
+                        type="submit" 
+                        class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 transition-colors duration-200"
+                    >
+                        <i class="fas fa-plus mr-2"></i>
+                        Add Goal
+                    </button>
+                </div>
+            </form>
         </div>
-        <div class="form-group">
-            <label for="{{ form.amount_to_save.id_for_label }}">Amount to Save</label>
-            {{ form.amount_to_save }}
-        </div>
-        <button type="submit" class="btn btn-primary">Add Goal</button>
-    </form>
+    </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set minimum date for start date as today
+    const today = new Date().toISOString().split('T')[0];
+    const startDateInput = document.querySelector('#id_start_date');
+    const endDateInput = document.querySelector('#id_end_date');
+    
+    startDateInput.min = today;
+    
+    // Update end date minimum when start date changes
+    startDateInput.addEventListener('change', function() {
+        endDateInput.min = this.value;
+        if (endDateInput.value && endDateInput.value < this.value) {
+            endDateInput.value = this.value;
+        }
+    });
+});
+</script>
 {% endblock %}

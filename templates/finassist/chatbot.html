@@ -2,104 +2,172 @@
 {% load static %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-10">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item">
-                        <a href="">Chatbot</a>
-                    </li>
-                    <li class="breadcrumb-item active" aria-current="page">
-                        Personal Finance Assistant
-                    </li>
-                </ol>
-            </nav>
-        </div>
-    </div>
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-6">
+    <div class="max-w-4xl mx-auto px-4">
+        <!-- Breadcrumb -->
+        <nav class="flex justify-between mb-6" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 text-sm font-medium md:space-x-2">
+                <li class="inline-flex items-center">
+                    <a href="" class="inline-flex items-center text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
+                        <i class="fas fa-robot mr-2"></i>
+                        Chatbot
+                    </a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                        <span class="text-gray-500 dark:text-gray-400">Personal Finance Assistant</span>
+                    </div>
+                </li>
+            </ol>
+            <button id="clear-history" class="text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 flex items-center">
+                <i class="fas fa-trash-alt mr-2"></i>
+                Clear History
+            </button>
+        </nav>
 
-    <div class="container">
-        {% include 'partials/_messages.html' %}
-        <div id="chat-history" class="mb-4 p-3 border rounded bg-light" style="height: 400px; overflow-y: auto;">
-            {% for chat in chat_history %}
-                {% if chat.user == request.user %}
-                    <div class="d-flex justify-content-end mb-3">
-                        <div class="p-3 rounded bg-primary text-white" style="max-width: 70%;">
-                            <div>{{ chat.message }}</div>
-                            <small class="d-block text-light">{{ chat.timestamp|date:"d M, H:i" }}</small>
+        <!-- Chat Container -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+            {% include 'partials/_messages.html' %}
+            
+            <!-- Chat History -->
+            <div id="chat-history" class="p-4 h-[600px] overflow-y-auto space-y-4 border-b border-gray-200 dark:border-gray-700">
+                {% for chat in chat_history reversed %}
+                    {% if chat.user == request.user %}
+                        <!-- User Message -->
+                        <div class="flex justify-end space-x-2">
+                            <div class="max-w-[70%]">
+                                <div class="bg-blue-600 text-white p-3 rounded-tl-lg rounded-tr-lg rounded-bl-lg">
+                                    <p class="text-sm">{{ chat.message }}</p>
+                                </div>
+                                <span class="text-xs text-gray-500 dark:text-gray-400 mt-1 block text-right">
+                                    <i class="far fa-clock mr-1"></i>
+                                    {{ chat.timestamp|date:"d M, H:i" }}
+                                </span>
+                            </div>
+                            <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                                <i class="fas fa-user text-blue-600 dark:text-blue-400"></i>
+                            </div>
                         </div>
-                    </div>
-                    <div class="d-flex justify-content-start mb-3">
-                        <div class="p-3 rounded bg-light border" style="max-width: 70%;">
-                            <div>{{ chat.response }}</div>
-                            <small class="d-block text-muted">{{ chat.timestamp|date:"d M, H:i" }}</small>
+                        
+                        <!-- Assistant Response -->
+                        <div class="flex justify-start space-x-2">
+                            <div class="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
+                                <i class="fas fa-robot text-purple-600 dark:text-purple-400"></i>
+                            </div>
+                            <div class="max-w-[70%]">
+                                <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-tl-lg rounded-tr-lg rounded-br-lg">
+                                    <p class="text-sm text-gray-800 dark:text-gray-200">{{ chat.response }}</p>
+                                </div>
+                                <span class="text-xs text-gray-500 dark:text-gray-400 mt-1 block">
+                                    <i class="far fa-clock mr-1"></i>
+                                    {{ chat.timestamp|date:"d M, H:i" }}
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                {% else %}
-                    <div class="d-flex justify-content-start mb-3">
-                        <div class="p-3 rounded bg-secondary text-white" style="max-width: 70%;">
-                            <div>{{ chat.message }}</div>
-                            <small class="d-block text-light">{{ chat.timestamp|date:"d M, H:i" }}</small>
+                    {% else %}
+                        <!-- Other User Message -->
+                        <div class="flex justify-start space-x-2">
+                            <div class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                                <i class="fas fa-user text-gray-600 dark:text-gray-400"></i>
+                            </div>
+                            <div class="max-w-[70%]">
+                                <div class="bg-gray-500 text-white p-3 rounded-tl-lg rounded-tr-lg rounded-br-lg">
+                                    <p class="text-sm">{{ chat.message }}</p>
+                                </div>
+                                <span class="text-xs text-gray-500 dark:text-gray-400 mt-1 block">
+                                    <i class="far fa-clock mr-1"></i>
+                                    {{ chat.timestamp|date:"d M, H:i" }}
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                    <div class="d-flex justify-content-end mb-3">
-                        <div class="p-3 rounded bg-light border" style="max-width: 70%;">
-                            <div>{{ chat.response }}</div>
-                            <small class="d-block text-muted">{{ chat.timestamp|date:"d M, H:i" }}</small>
+                        
+                        <!-- Response to Other User -->
+                        <div class="flex justify-end space-x-2">
+                            <div class="max-w-[70%]">
+                                <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-tl-lg rounded-tr-lg rounded-bl-lg">
+                                    <p class="text-sm text-gray-800 dark:text-gray-200">{{ chat.response }}</p>
+                                </div>
+                                <span class="text-xs text-gray-500 dark:text-gray-400 mt-1 block text-right">
+                                    <i class="far fa-clock mr-1"></i>
+                                    {{ chat.timestamp|date:"d M, H:i" }}
+                                </span>
+                            </div>
+                            <div class="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
+                                <i class="fas fa-robot text-purple-600 dark:text-purple-400"></i>
+                            </div>
                         </div>
-                    </div>
-                {% endif %}
-            {% endfor %}
-        </div>
-
-        <form method="post" class="mt-3">
-            {% csrf_token %}
-            <div class="input-group">
-                <input type="text" name="message" id="message" class="form-control" placeholder="Type your message..." required>
-                <button type="submit" class="btn btn-primary d-flex align-items-center">
-                    <span class="button-text">Send</span>
-                    <div class="spinner-border spinner-border-sm ms-2 d-none" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                </button>
+                    {% endif %}
+                {% endfor %}
             </div>
-        </form>
+
+            <!-- Message Input -->
+            <form method="post" class="p-4">
+                {% csrf_token %}
+                <div class="flex space-x-2">
+                    <div class="flex-1 relative">
+                        <input 
+                            type="text" 
+                            name="message" 
+                            id="message" 
+                            class="block w-full p-4 pl-4 pr-16 text-sm text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Type your message..." 
+                            required
+                        >
+                        <button 
+                            type="submit" 
+                            class="text-white absolute right-2.5 bottom-2.5 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-4 py-2 flex items-center transition-all duration-200"
+                        >
+                            <span class="button-text mr-2">Send</span>
+                            <i class="fas fa-paper-plane"></i>
+                            <div class="spinner-border spinner-border-sm ml-2 hidden" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
-<style>
-.button-disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-}
-
-.fade-out {
-    opacity: 0.5;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-}
-</style>
-
 <script>
-document.querySelector('form').addEventListener('submit', function(e) {
-    // Don't prevent default - let the form submit normally
-    
-    // Get the button, spinner, and text elements
-    const button = this.querySelector('button');
-    const spinner = button.querySelector('.spinner-border');
-    const buttonText = button.querySelector('.button-text');
-    
-    // Disable the button and show loading state
-    button.disabled = true;
-    button.classList.add('button-disabled');
-    spinner.classList.remove('d-none');
-    this.classList.add('fade-out');
+document.addEventListener('DOMContentLoaded', function() {
+    // Scroll to bottom of chat history on load
+    const chatHistory = document.getElementById('chat-history');
+    chatHistory.scrollTop = chatHistory.scrollHeight;
 
-    // Set timeout to reload the page after 10 seconds
-    setTimeout(() => {
-        location.reload();
-    }, 10000);
+    // Clear history functionality
+    const clearHistoryBtn = document.getElementById('clear-history');
+    clearHistoryBtn.addEventListener('click', function() {
+        if (confirm('Are you sure you want to clear the chat history? This will only hide the messages for this session.')) {
+            chatHistory.innerHTML = '';
+            // You might want to add an API call here to clear the history in the backend
+        }
+    });
+
+    // Form submission handler
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const button = this.querySelector('button');
+        const spinner = button.querySelector('.spinner-border');
+        const buttonText = button.querySelector('.button-text');
+        const icon = button.querySelector('.fa-paper-plane');
+        
+        // Disable button and show loading state
+        button.disabled = true;
+        button.classList.add('opacity-70', 'cursor-not-allowed');
+        spinner.classList.remove('hidden');
+        icon.classList.add('hidden');
+        
+        // Add fade effect to form
+        this.classList.add('opacity-50', 'pointer-events-none');
+        
+        // Reload page after timeout
+        setTimeout(() => {
+            location.reload();
+        }, 10000);
+    });
 });
 </script>
-
 {% endblock content %}
