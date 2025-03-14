@@ -11,7 +11,11 @@ from openai import OpenAI
 
 client = OpenAI(
 	base_url="https://api-inference.huggingface.co/v1/",
+<<<<<<< HEAD
     api_key="",
+=======
+	api_key=""
+>>>>>>> d911c4eeec536651dbfa30f40f569210f7fa57e3
 )
 
 # Function to get additional context
