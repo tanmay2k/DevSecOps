@@ -52,6 +52,8 @@ INSTALLED_APPS = [
     'userprofile',
     'report_generation',
     'finassist'
+
+
 ]
 
 MIDDLEWARE = [
@@ -163,3 +165,5 @@ CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 
 TIME_ZONE = 'Asia/Kolkata'  # Set to Indian Standard Time
 USE_TZ = True  # Enables timezone support
+
+
