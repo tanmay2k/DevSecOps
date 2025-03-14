@@ -15,6 +15,25 @@
 
         {% include "partials/_messages.html" %}
 
+        <!-- AI Recommendations Section -->
+        {% if ai_recommendations %}
+        <div class="mb-8">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+                <div class="bg-purple-50 dark:bg-purple-900/30 px-6 py-4 border-b border-purple-100 dark:border-purple-900">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                        <i class="fas fa-robot mr-2"></i>AI Recommendations
+                    </h3>
+                </div>
+                
+                <div class="p-6 space-y-4">
+                    <div class="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300">
+                        {{ ai_recommendations|linebreaksbr|safe }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Goals List -->
         <div class="space-y-6">
             {% for goal in goals %}

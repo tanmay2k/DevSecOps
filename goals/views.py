@@ -1,10 +1,99 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Goal
+from userincome.models import UserIncome
+from expenses.models import Expense
 from .forms import GoalForm, AddAmountForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.mail import send_mail
+from django.db.models import Sum
+from django.utils import timezone
+import json
+from decimal import Decimal
+from openai import OpenAI
+from django.conf import settings
+import logging
 
+
+client = OpenAI(
+	base_url="https://api-inference.huggingface.co/v1/",
+    api_key="",
+)
+def generate_ai_recommendations(user):
+    # Fetch user data
+    goals = Goal.objects.filter(owner=user)
+    incomes = UserIncome.objects.filter(owner=user)
+    expenses = Expense.objects.filter(owner=user)
+    
+    # Convert Decimal values to floats for JSON serialization
+    current_month = timezone.now().month
+    monthly_income = float(incomes.filter(date__month=current_month).aggregate(Sum('amount'))['amount__sum'] or 0.0)
+    monthly_expenses = float(expenses.filter(date__month=current_month).aggregate(Sum('amount'))['amount__sum'] or 0.0)
+    net_cash_flow = monthly_income - monthly_expenses
+    
+    # Convert Decimal to float in expense analysis
+    expense_analysis = expenses.values('category').annotate(total=Sum('amount')).order_by('-total')
+    top_expenses = [{
+        "category": e['category'], 
+        "amount": float(e['total'])
+    } for e in expense_analysis[:3]]
+    
+    # Convert Decimal to float in goals analysis
+    goals_analysis = []
+    for goal in goals:
+        progress = goal.calculate_progress()
+        goals_analysis.append({
+            "name": goal.name,
+            "progress": float(progress['saved_percentage']),
+            "daily_required": float(progress['daily_savings_required']),
+            "status": "behind" if progress['daily_savings_required'] > Decimal('0') else "on_track"
+        })
+    
+    # Create proper message structure for OpenAI API
+    messages = [
+        {
+            "role": "system",
+            "content": """You are a financial advisor providing personalized recommendations. 
+            Provide specific, actionable recommendations to help improve savings and investments. 
+            Consider:
+            1. Expense reduction opportunities
+            2. Savings goal adjustments
+            3. Investment suggestions based on surplus
+            4. Behavioral financial advice
+            5. Risk management strategies
+            
+            Format the response with clear sections and bullet points. Use simple language."""
+        },
+        {
+            "role": "user",
+            "content": f"""Here is my financial data:
+            
+            Monthly Income: ₹{monthly_income:.2f}
+            Monthly Expenses: ₹{monthly_expenses:.2f}
+            Net Cash Flow: ₹{net_cash_flow:.2f}
+            
+            Top Expense Categories:
+            {json.dumps(top_expenses, indent=2)}
+            
+            Savings Goals Progress:
+            {json.dumps(goals_analysis, indent=2)}
+            
+            Please provide recommendations based on this data."""
+        }
+    ]
+    
+    # Make API request to OpenAI
+    try:
+        response = client.chat.completions.create(
+            model="microsoft/Phi-3.5-mini-instruct",  # Replace with actual model name if different
+            messages=messages,
+            temperature=0.7,
+            max_tokens=500
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        logging.error(f"Error generating recommendations: {str(e)}")
+        return "Unable to generate recommendations at this time. Please try again later."
 @login_required
 def add_goal(request):
     if request.method == 'POST':
@@ -27,9 +116,14 @@ def list_goals(request):
 
     # goals = Goal.objects.all()
     goals = Goal.objects.filter(owner=request.user)
-  
+    ai_recommendations = generate_ai_recommendations(request.user)
+    
+    context = {
+        'goals': goals,
+        'ai_recommendations': ai_recommendations
+    }
     add_amount_form = AddAmountForm() 
-    return render(request, 'goals/list_goals.html', {'goals': goals, 'add_amount_form': add_amount_form})
+    return render(request, 'goals/list_goals.html', context)
 
 
 @login_required(login_url='/authentication/login')
