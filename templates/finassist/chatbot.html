@@ -57,7 +57,9 @@
                             </div>
                             <div class="max-w-[70%]">
                                 <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-tl-lg rounded-tr-lg rounded-br-lg">
-                                    <p class="text-sm text-gray-800 dark:text-gray-200">{{ chat.response }}</p>
+                                    <div class="formatted-response text-sm text-gray-800 dark:text-gray-200">
+                                        {{ chat.response|safe }}
+                                    </div>
                                 </div>
                                 <span class="text-xs text-gray-500 dark:text-gray-400 mt-1 block">
                                     <i class="far fa-clock mr-1"></i>
@@ -86,7 +88,9 @@
                         <div class="flex justify-end space-x-2">
                             <div class="max-w-[70%]">
                                 <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-tl-lg rounded-tr-lg rounded-bl-lg">
-                                    <p class="text-sm text-gray-800 dark:text-gray-200">{{ chat.response }}</p>
+                                    <div class="formatted-response text-sm text-gray-800 dark:text-gray-200">
+                                        {{ chat.response|safe }}
+                                    </div>
                                 </div>
                                 <span class="text-xs text-gray-500 dark:text-gray-400 mt-1 block text-right">
                                     <i class="far fa-clock mr-1"></i>
@@ -131,24 +135,90 @@
     </div>
 </div>
 
+<!-- Include Highlight.js for code formatting -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+
+<!-- Include Marked.js for Markdown formatting -->
+<script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Scroll to bottom of chat history on load
     const chatHistory = document.getElementById('chat-history');
     chatHistory.scrollTop = chatHistory.scrollHeight;
 
+    // Format responses with markdown
+    document.querySelectorAll('.formatted-response').forEach(function(element) {
+        // Parse markdown to HTML
+        const rawContent = element.innerHTML.trim();
+        
+        // Check if the content appears to contain HTML
+        if (rawContent.includes('<') && rawContent.includes('>')) {
+            // If it already has HTML, don't process with markdown
+            element.classList.add('formatted');
+        } else {
+            // Use marked.js to convert markdown to HTML
+            element.innerHTML = marked.parse(rawContent);
+        }
+        
+        // Process code blocks with highlight.js
+        element.querySelectorAll('pre code').forEach((block) => {
+            hljs.highlightElement(block);
+        });
+        
+        // Apply custom styling to elements
+        element.querySelectorAll('a').forEach(function(link) {
+            link.classList.add('text-blue-600', 'dark:text-blue-400', 'hover:underline');
+        });
+        
+        element.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(function(heading) {
+            heading.classList.add('font-bold', 'mt-2', 'mb-1');
+        });
+        
+        element.querySelectorAll('ul, ol').forEach(function(list) {
+            list.classList.add('ml-4', 'my-2');
+        });
+        
+        element.querySelectorAll('table').forEach(function(table) {
+            table.classList.add('border-collapse', 'table-auto', 'w-full', 'text-xs', 'my-2');
+            table.querySelectorAll('th, td').forEach(function(cell) {
+                cell.classList.add('border', 'border-gray-300', 'dark:border-gray-600', 'px-2', 'py-1');
+            });
+            table.querySelectorAll('th').forEach(function(header) {
+                header.classList.add('bg-gray-200', 'dark:bg-gray-600');
+            });
+        });
+    });
+
     // Clear history functionality
     const clearHistoryBtn = document.getElementById('clear-history');
     clearHistoryBtn.addEventListener('click', function() {
         if (confirm('Are you sure you want to clear the chat history? This will only hide the messages for this session.')) {
             chatHistory.innerHTML = '';
-            // You might want to add an API call here to clear the history in the backend
+            // Send AJAX request to clear history on the server
+            fetch('/clear-chat-history/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                }
+            }).then(response => {
+                if (!response.ok) {
+                    console.error('Failed to clear chat history');
+                }
+            });
         }
     });
 
     // Form submission handler
     const form = document.querySelector('form');
     form.addEventListener('submit', function(e) {
+        const messageInput = document.getElementById('message');
+        if (!messageInput.value.trim()) {
+            e.preventDefault();
+            return;
+        }
+        
         const button = this.querySelector('button');
         const spinner = button.querySelector('.spinner-border');
         const buttonText = button.querySelector('.button-text');
@@ -159,15 +229,189 @@ document.addEventListener('DOMContentLoaded', function() {
         button.classList.add('opacity-70', 'cursor-not-allowed');
         spinner.classList.remove('hidden');
         icon.classList.add('hidden');
+        buttonText.textContent = 'Sending...';
         
-        // Add fade effect to form
-        this.classList.add('opacity-50', 'pointer-events-none');
+        // Add user message to the chat immediately for better UX
+        const userMessage = messageInput.value;
+        const userMessageHtml = `
+            <div class="flex justify-end space-x-2">
+                <div class="max-w-[70%]">
+                    <div class="bg-blue-600 text-white p-3 rounded-tl-lg rounded-tr-lg rounded-bl-lg">
+                        <p class="text-sm">${userMessage}</p>
+                    </div>
+                    <span class="text-xs text-gray-500 dark:text-gray-400 mt-1 block text-right">
+                        <i class="far fa-clock mr-1"></i>
+                        Just now
+                    </span>
+                </div>
+                <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                    <i class="fas fa-user text-blue-600 dark:text-blue-400"></i>
+                </div>
+            </div>
+            
+            <div class="flex justify-start space-x-2">
+                <div class="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
+                    <i class="fas fa-robot text-purple-600 dark:text-purple-400"></i>
+                </div>
+                <div class="max-w-[70%]">
+                    <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-tl-lg rounded-tr-lg rounded-br-lg">
+                        <div class="formatted-response text-sm text-gray-800 dark:text-gray-200">
+                            <div class="typing-animation">
+                                <span class="dot"></span>
+                                <span class="dot"></span>
+                                <span class="dot"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <span class="text-xs text-gray-500 dark:text-gray-400 mt-1 block">
+                        <i class="far fa-clock mr-1"></i>
+                        Processing
+                    </span>
+                </div>
+            </div>
+        `;
         
-        // Reload page after timeout
-        setTimeout(() => {
-            location.reload();
-        }, 10000);
+        chatHistory.insertAdjacentHTML('beforeend', userMessageHtml);
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+        
+        // Submit the form via AJAX instead of page reload
+        e.preventDefault();
+        
+        fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Remove the typing animation and update with the response
+            const typingAnimation = document.querySelector('.typing-animation');
+            if (typingAnimation) {
+                const responseContainer = typingAnimation.closest('.formatted-response');
+                responseContainer.innerHTML = marked.parse(data.response);
+                
+                // Apply code highlighting
+                responseContainer.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block);
+                });
+                
+                // Update timestamp
+// Update timestamp
+const timestampElem = responseContainer.closest('.max-w-[70%]').querySelector('span');
+                timestampElem.innerHTML = '<i class="far fa-clock mr-1"></i>Just now';
+            }
+            
+            // Reset the form
+            form.reset();
+            button.disabled = false;
+            button.classList.remove('opacity-70', 'cursor-not-allowed');
+            spinner.classList.add('hidden');
+            icon.classList.remove('hidden');
+            buttonText.textContent = 'Send';
+            
+            // Scroll to bottom
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            button.disabled = false;
+            button.classList.remove('opacity-70', 'cursor-not-allowed');
+            spinner.classList.add('hidden');
+            icon.classList.remove('hidden');
+            buttonText.textContent = 'Send';
+            
+            // Show error message in the chat
+            const typingAnimation = document.querySelector('.typing-animation');
+            if (typingAnimation) {
+                const responseContainer = typingAnimation.closest('.formatted-response');
+                responseContainer.innerHTML = 'Sorry, there was an error processing your request. Please try again.';
+                
+                // Update timestamp
+                const timestampElem = responseContainer.closest('.max-w-[70%]').querySelector('span');
+                timestampElem.innerHTML = '<i class="far fa-clock mr-1"></i>Just now';
+            }
+        });
     });
 });
 </script>
+
+<style>
+/* Animation for typing indicator */
+.typing-animation {
+    display: flex;
+    align-items: center;
+    height: 20px;
+}
+
+.typing-animation .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 4px;
+    background: #6B7280;
+    animation: wave 1.3s linear infinite;
+}
+
+.typing-animation .dot:nth-child(2) {
+    animation-delay: -1.1s;
+}
+
+.typing-animation .dot:nth-child(3) {
+    animation-delay: -0.9s;
+}
+
+@keyframes wave {
+    0%, 60%, 100% {
+        transform: initial;
+    }
+    30% {
+        transform: translateY(-5px);
+    }
+}
+
+/* Code block formatting */
+pre {
+    background-color: #1E293B;
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin: 0.75rem 0;
+    overflow-x: auto;
+}
+
+code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.85em;
+}
+
+/* Inline code */
+:not(pre) > code {
+    background-color: rgba(99, 102, 241, 0.1);
+    color: #4F46E5;
+    padding: 0.1em 0.3em;
+    border-radius: 3px;
+    font-size: 0.9em;
+}
+
+/* Dark mode styles for inline code */
+.dark :not(pre) > code {
+    background-color: rgba(139, 92, 246, 0.15);
+    color: #A78BFA;
+}
+
+/* Blockquote styling */
+blockquote {
+    border-left: 4px solid #E5E7EB;
+    padding-left: 1rem;
+    margin: 1rem 0;
+    color: #6B7280;
+}
+
+.dark blockquote {
+    border-left-color: #4B5563;
+    color: #9CA3AF;
+}
+</style>
 {% endblock content %}
