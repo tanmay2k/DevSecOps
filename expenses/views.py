@@ -27,6 +27,16 @@ import datetime
 from .models import ExpenseLimit
 from django.core.mail import send_mail
 from django.conf import settings
+from django.db.models import Sum, Avg
+from django.utils import timezone
+from datetime import timedelta
+import json
+from django.db.models import Sum
+from django.utils import timezone
+from datetime import timedelta
+import json
+from .models import Expense, Category, ExpenseLimit
+from userpreferences.models import UserPreference
 
 data = pd.read_csv('dataset.csv')
 
@@ -265,7 +275,68 @@ def expense_category_summary(request):
 
 @login_required(login_url='/authentication/login')
 def stats_view(request):
-    return render(request, 'expenses/stats.html')
+    # Get date range from request, default to 30 days
+    date_range = request.GET.get('date_range', '30')
+    
+    # Calculate date range
+    end_date = timezone.now().date()
+    start_date = end_date - timedelta(days=int(date_range))
+    
+    # Get expenses within date range
+    expenses = Expense.objects.filter(
+        owner=request.user,
+        date__gte=start_date,
+        date__lte=end_date
+    )
+    
+    # Calculate total expenses with fallback to 0
+    total_expenses = expenses.aggregate(
+        total=Sum('amount')
+    )['total'] or 0.00
+    
+    # Calculate monthly average (handle zero case)
+    try:
+        monthly_average = total_expenses / (int(date_range) / 30)
+    except (ZeroDivisionError, TypeError):
+        monthly_average = 0.00
+    
+    # Get top categories (handle empty case)
+    top_categories = expenses.values('category')\
+        .annotate(total=Sum('amount'))\
+        .order_by('-total')[:5]
+    
+    # Prepare chart data
+    categories = []
+    amounts = []
+    
+    for category in top_categories:
+        categories.append(category['category'])
+        amounts.append(float(category['total'] or 0))
+    
+    chart_data = {
+        'labels': categories,
+        'datasets': [{
+            'label': 'Expenses by Category',
+            'data': amounts,
+            'backgroundColor': [
+                '#FF6384', '#36A2EB', '#FFCE56',
+                '#4BC0C0', '#9966FF'
+            ]
+        }]
+    }
+    
+    context = {
+        'total_expenses': total_expenses,
+        'monthly_average': round(monthly_average, 2),
+        'top_categories': [
+            {'name': cat['category'], 'total': cat['total'] or 0} 
+            for cat in top_categories
+        ],
+        'date_range': date_range,
+        'chart_data': json.dumps(chart_data)
+    }
+    
+    return render(request, 'expenses/stats.html', context)
 
 @login_required(login_url='/authentication/login')
 def predict_category(description):

@@ -49,9 +49,46 @@
                 <div class="lg:col-span-1">
                     <div class="bg-gray-50 rounded-lg p-4">
                         <h3 class="text-lg font-semibold text-gray-900 mb-4">Summary Statistics</h3>
-                        <!-- Add your statistics content here -->
-                        <div id="chartLegend" class="space-y-2">
-                            <!-- Legend will be populated by JavaScript -->
+                        <!-- Total Expenses Card -->
+                        <div class="bg-white rounded-lg p-4 mb-4 shadow-sm">
+                            <h4 class="text-sm font-medium text-gray-500">Total Expenses</h4>
+                            <p class="text-2xl font-bold text-gray-900">₹{{ total_expenses|floatformat:2 }}</p>
+                        </div>
+                        
+                        <!-- Average Monthly Expenses Card -->
+                        <div class="bg-white rounded-lg p-4 mb-4 shadow-sm">
+                            <h4 class="text-sm font-medium text-gray-500">Monthly Average</h4>
+                            <p class="text-2xl font-bold text-gray-900">₹{{ monthly_average|floatformat:2 }}</p>
+                        </div>
+
+                        <!-- Top Categories -->
+                        <div class="bg-white rounded-lg p-4 mb-4 shadow-sm">
+                            <h4 class="text-sm font-medium text-gray-500 mb-2">Top Categories</h4>
+                            <div class="space-y-2">
+                                {% for category in top_categories %}
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">{{ category.name }}</span>
+                                    <span class="text-sm font-medium">₹{{ category.total|floatformat:2 }}</span>
+                                </div>
+                                {% empty %}
+                                <p class="text-sm text-gray-500">No categories found</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Date Range -->
+                        <div class="bg-white rounded-lg p-4 shadow-sm">
+                            <h4 class="text-sm font-medium text-gray-500 mb-2">Date Range</h4>
+                            <div class="flex justify-between items-center">
+                                <form method="GET" class="w-full">
+                                    <select name="date_range" onchange="this.form.submit()" class="block w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="7" {% if date_range == '7' %}selected{% endif %}>Last 7 days</option>
+                                        <option value="30" {% if date_range == '30' %}selected{% endif %}>Last 30 days</option>
+                                        <option value="90" {% if date_range == '90' %}selected{% endif %}>Last 3 months</option>
+                                        <option value="365" {% if date_range == '365' %}selected{% endif %}>Last year</option>
+                                    </select>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -60,5 +97,9 @@
     </div>
 </div>
 
+<!-- Pass data to JavaScript -->
+<script>
+    const chartData = {{ chart_data|safe }};
+</script>
 <script src="{% static 'js/stats.js' %}"></script>
 {% endblock content %}
