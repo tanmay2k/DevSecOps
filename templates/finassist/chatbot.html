@@ -298,9 +298,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 
                 // Update timestamp
-// Update timestamp
-const timestampElem = responseContainer.closest('.max-w-[70%]').querySelector('span');
+                const timestampElem = responseContainer.closest('.max-w-[70%]').querySelector('span');
                 timestampElem.innerHTML = '<i class="far fa-clock mr-1"></i>Just now';
+                
+                // Apply formatting to new elements
+                formatNewResponse(responseContainer);
+            }
+            
+            // If the response includes updated data, refresh the UI
+            if (data.updated_data) {
+                updateUIWithNewData(data.updated_data);
             }
             
             // Reset the form
