@@ -83,3 +83,24 @@
 .showPasswordToggle:hover {
     transform: scale(1.2);
 }
+
+/* Dark mode styles for stats page */
+.dark .bg-white {
+    background-color: #1a1a1a;
+}
+
+.dark .text-gray-900 {
+    color: #ffffff;
+}
+
+.dark .text-gray-700 {
+    color: #e5e5e5;
+}
+
+.dark .border-gray-200 {
+    border-color: #2d2d2d;
+}
+
+.dark .divide-gray-200 > * + * {
+    border-color: #2d2d2d;
+}

@@ -1,13 +1,28 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
-    <div class="max-w-2xl mx-auto px-4">
+<div class="min-h-screen py-8 relative">
+    <!-- Background image with blur -->
+    <div class="fixed inset-0 z-0"
+         style="background-image: url('https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&q=80');
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+                filter: blur(8px);
+                transform: scale(1.1);">
+    </div>
+    
+    <!-- Dark overlay -->
+    <div class="absolute inset-0 bg-black/60 z-10"></div>
+    
+    <!-- Main Content -->
+    <div class="max-w-2xl mx-auto px-4 relative z-20">
         <!-- Breadcrumb -->
         <nav class="flex mb-6" aria-label="Breadcrumb">
             <ol class="inline-flex items-center space-x-1 text-sm font-medium md:space-x-2">
                 <li class="inline-flex items-center">
-                    <a href="{% url 'income' %}" class="inline-flex items-center text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
+                    <a href="{% url 'income' %}" class="inline-flex items-center text-white hover:text-blue-400">
                         <i class="fas fa-money-bill-wave mr-2"></i>
                         Income
                     </a>
@@ -15,19 +30,18 @@
                 <li>
                     <div class="flex items-center">
                         <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
-                        <span class="text-gray-500 dark:text-gray-400">Add Income</span>
+                        <span class="text-gray-300">Add Income</span>
                     </div>
                 </li>
             </ol>
         </nav>
 
         <!-- Form Card -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+        <div class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl">
             <div class="p-6">
                 <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Add New Income</h2>
 
-                <form action="{% url 'add-income' %}" method="post" class="space-y-6">
-                    {% include 'partials/_messages.html' %}
+                <form method="POST">
                     {% csrf_token %}
 
                     <!-- Amount -->
@@ -35,20 +49,17 @@
                         <label for="amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Amount
                         </label>
-                        <div class="relative">
-                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">₹</span>
-                            <input 
-                                type="number"
-                                id="amount"
-                                name="amount"
-                                value="{{values.amount}}"
-                                required
-                                min="0"
-                                step="0.01"
-                                class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 pl-8 pr-4 py-3 text-sm text-gray-900 dark:text-gray-100 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
-                                placeholder="Enter amount"
-                            >
-                        </div>
+                        <input 
+                            type="number"
+                            id="amount"
+                            name="amount"
+                            value="{{values.amount}}"
+                            required
+                            min="0"
+                            step="0.01"
+                            class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 pl-8 pr-4 py-3 text-sm text-gray-900 dark:text-gray-100 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
+                            placeholder="Enter amount"
+                        >
                     </div>
 
                     <!-- Description -->

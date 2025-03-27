@@ -2,8 +2,22 @@
 {% load static %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-6">
-    <div class="max-w-4xl mx-auto px-4">
+<div class="min-h-screen py-6 relative">
+    <!-- Background image with blur -->
+    <div class="fixed inset-0 z-0"
+         style="background-image: url('https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&q=80');
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+                filter: blur(8px);
+                transform: scale(1.1);">
+    </div>
+    
+    <!-- Dark overlay -->
+    <div class="absolute inset-0 bg-black/60 z-10"></div>
+    
+    <!-- Main Content -->
+    <div class="max-w-4xl mx-auto px-4 relative z-20">
         <!-- Breadcrumb -->
         <nav class="flex justify-between mb-6" aria-label="Breadcrumb">
             <ol class="inline-flex items-center space-x-1 text-sm font-medium md:space-x-2">
@@ -27,7 +41,7 @@
         </nav>
 
         <!-- Chat Container -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+        <div class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl">
             {% include 'partials/_messages.html' %}
             
             <!-- Chat History -->
@@ -106,7 +120,7 @@
             </div>
 
             <!-- Message Input -->
-            <form method="post" class="p-4">
+            <form method="post" class="p-4 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-b-lg">
                 {% csrf_token %}
                 <div class="flex space-x-2">
                     <div class="flex-1 relative">

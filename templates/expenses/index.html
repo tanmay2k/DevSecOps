@@ -2,8 +2,22 @@
 {% load static %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen py-8 relative">
+    <!-- Background image with blur -->
+    <div class="fixed inset-0 z-0"
+         style="background-image: url('https://images.unsplash.com/photo-1554224154-26032ffc0d07?auto=format&fit=crop&q=80');
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+                filter: blur(8px);
+                transform: scale(1.1);">
+    </div>
+    
+    <!-- Dark overlay -->
+    <div class="absolute inset-0 bg-black/60 z-10"></div>
+    
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20">
         <!-- Header Section -->
         <div class="flex flex-col md:flex-row justify-between items-center mb-6">
             <!-- Breadcrumb -->
@@ -41,118 +55,121 @@
         {% include 'partials/_messages.html' %}
         
         {% if expenses.count %}
-        <!-- Search Bar -->
-        <div class="mb-6">
-            <div class="max-w-md ml-auto">
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <svg class="w-4 h-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
-                        </svg>
+        <!-- Main Content Card -->
+        <div class="bg-white/95 backdrop-blur-sm rounded-lg shadow-xl p-6">
+            <!-- Search Bar -->
+            <div class="mb-6">
+                <div class="max-w-md ml-auto">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <svg class="w-4 h-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+                            </svg>
+                        </div>
+                        <input type="text" id="searchField" 
+                               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5" 
+                               placeholder="Search expenses...">
                     </div>
-                    <input type="text" id="searchField" 
-                           class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5" 
-                           placeholder="Search expenses...">
                 </div>
             </div>
-        </div>
 
-        <!-- Expenses Table -->
-        <div class="relative overflow-x-auto shadow-md sm:rounded-lg mb-6">
-            <table class="w-full text-sm text-left text-gray-500">
-                <thead class="text-xs text-gray-700 uppercase bg-gray-50">
-                    <tr>
-                        <th scope="col" class="px-6 py-3">
-                            Amount ({{currency}})
-                            <div class="inline-flex ml-1">
-                                <a href="?sort=amount_asc" class="hover:text-blue-600">↑</a>
-                                <a href="?sort=amount_desc" class="hover:text-blue-600 ml-1">↓</a>
-                            </div>
-                        </th>
-                        <th scope="col" class="px-6 py-3">Category</th>
-                        <th scope="col" class="px-6 py-3">Description</th>
-                        <th scope="col" class="px-6 py-3">
-                            Date
-                            <div class="inline-flex ml-1">
-                                <a href="?sort=date_asc" class="hover:text-blue-600">↑</a>
-                                <a href="?sort=date_desc" class="hover:text-blue-600 ml-1">↓</a>
-                            </div>
-                        </th>
-                        <th scope="col" class="px-6 py-3">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for expense in page_obj %}
-                    <tr class="bg-white border-b hover:bg-gray-50">
-                        <td class="px-6 py-4 font-medium text-gray-900">{{expense.amount}}</td>
-                        <td class="px-6 py-4">{{expense.category}}</td>
-                        <td class="px-6 py-4">{{expense.description}}</td>
-                        <td class="px-6 py-4">{{expense.date}}</td>
-                        <td class="px-6 py-4">
-                            <a href="{% url 'expense-edit' expense.id %}" 
-                               class="font-medium text-blue-600 hover:text-blue-800">Edit</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Search Results Table (Hidden by default) -->
-        <div class="table-output" style="display: none;">
+            <!-- Expenses Table -->
             <div class="relative overflow-x-auto shadow-md sm:rounded-lg mb-6">
                 <table class="w-full text-sm text-left text-gray-500">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50">
                         <tr>
-                            <th scope="col" class="px-6 py-3">Amount ({{currency}})</th>
+                            <th scope="col" class="px-6 py-3">
+                                Amount ({{currency}})
+                                <div class="inline-flex ml-1">
+                                    <a href="?sort=amount_asc" class="hover:text-blue-600">↑</a>
+                                    <a href="?sort=amount_desc" class="hover:text-blue-600 ml-1">↓</a>
+                                </div>
+                            </th>
                             <th scope="col" class="px-6 py-3">Category</th>
                             <th scope="col" class="px-6 py-3">Description</th>
-                            <th scope="col" class="px-6 py-3">Date</th>
+                            <th scope="col" class="px-6 py-3">
+                                Date
+                                <div class="inline-flex ml-1">
+                                    <a href="?sort=date_asc" class="hover:text-blue-600">↑</a>
+                                    <a href="?sort=date_desc" class="hover:text-blue-600 ml-1">↓</a>
+                                </div>
+                            </th>
                             <th scope="col" class="px-6 py-3">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="table-body"></tbody>
+                    <tbody>
+                        {% for expense in page_obj %}
+                        <tr class="bg-white border-b hover:bg-gray-50">
+                            <td class="px-6 py-4 font-medium text-gray-900">{{expense.amount}}</td>
+                            <td class="px-6 py-4">{{expense.category}}</td>
+                            <td class="px-6 py-4">{{expense.description}}</td>
+                            <td class="px-6 py-4">{{expense.date}}</td>
+                            <td class="px-6 py-4">
+                                <a href="{% url 'expense-edit' expense.id %}" 
+                                   class="font-medium text-blue-600 hover:text-blue-800">Edit</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
                 </table>
             </div>
-        </div>
 
-        <p class="no-results text-center text-gray-500 py-4" style="display: none;">No results found</p>
-
-        <!-- Pagination -->
-        <div class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 px-4 py-3 sm:px-6">
-            <div class="text-sm text-gray-700">
-                Showing page {{page_obj.number}} of {{ page_obj.paginator.num_pages }}
+            <!-- Search Results Table (Hidden by default) -->
+            <div class="table-output" style="display: none;">
+                <div class="relative overflow-x-auto shadow-md sm:rounded-lg mb-6">
+                    <table class="w-full text-sm text-left text-gray-500">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">Amount ({{currency}})</th>
+                                <th scope="col" class="px-6 py-3">Category</th>
+                                <th scope="col" class="px-6 py-3">Description</th>
+                                <th scope="col" class="px-6 py-3">Date</th>
+                                <th scope="col" class="px-6 py-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="table-body"></tbody>
+                    </table>
+                </div>
             </div>
-            <div>
-                <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-                    {% if page_obj.has_previous %}
-                    <a href="?page=1{% if sort_order %}&sort={{ sort_order }}{% endif %}" 
-                       class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                        <span class="sr-only">First</span>
-                        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                        </svg>
-                    </a>
-                    <a href="?page={{ page_obj.previous_page_number }}{% if sort_order %}&sort={{ sort_order }}{% endif %}" 
-                       class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                        Previous
-                    </a>
-                    {% endif %}
 
-                    {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}{% if sort_order %}&sort={{ sort_order }}{% endif %}" 
-                       class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                        Next
-                    </a>
-                    <a href="?page={{ page_obj.paginator.num_pages }}{% if sort_order %}&sort={{ sort_order }}{% endif %}" 
-                       class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                        <span class="sr-only">Last</span>
-                        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                        </svg>
-                    </a>
-                    {% endif %}
-                </nav>
+            <p class="no-results text-center text-gray-500 py-4" style="display: none;">No results found</p>
+
+            <!-- Pagination -->
+            <div class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 px-4 py-3 sm:px-6">
+                <div class="text-sm text-gray-700">
+                    Showing page {{page_obj.number}} of {{ page_obj.paginator.num_pages }}
+                </div>
+                <div>
+                    <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                        {% if page_obj.has_previous %}
+                        <a href="?page=1{% if sort_order %}&sort={{ sort_order }}{% endif %}" 
+                           class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                            <span class="sr-only">First</span>
+                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                        <a href="?page={{ page_obj.previous_page_number }}{% if sort_order %}&sort={{ sort_order }}{% endif %}" 
+                           class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                            Previous
+                        </a>
+                        {% endif %}
+
+                        {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% if sort_order %}&sort={{ sort_order }}{% endif %}" 
+                           class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                            Next
+                        </a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}{% if sort_order %}&sort={{ sort_order }}{% endif %}" 
+                           class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                            <span class="sr-only">Last</span>
+                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                        {% endif %}
+                    </nav>
+                </div>
             </div>
         </div>
         {% endif %}
