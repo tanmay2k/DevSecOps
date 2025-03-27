@@ -35,20 +35,20 @@
             <div class="bg-white bg-opacity-95 rounded-lg shadow-md p-6 space-y-6">
                 <h2 class="text-2xl font-bold text-gray-900 mb-6">Add New Expense</h2>
                 
-                <form action="{% url 'add-expenses' %}" method="post" id="expense-form" class="space-y-6">
+                <form action="{% url 'add-expenses' %}" method="post" id="expense-form" class="space-y-6" novalidate>
                     {% include 'partials/_messages.html'%}
                     {% csrf_token %}
 
                     <!-- Amount Field -->
                     <div>
-                        <label for="amount" class="block mb-2 text-sm font-medium text-gray-900">Amount</label>
+                        <label for="amount" class="block mb-2 text-sm font-medium text-gray-900">Amount *</label>
                         <div class="relative">
                             <span class="absolute inset-y-0 left-0 flex items-center pl-3">
                                 <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </span>
-                            <input type="number" name="amount" id="amount" value="{{values.amount}}"
+                            <input type="number" step="0.01" min="0" name="amount" id="amount" value="{{values.amount}}"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5"
                                 placeholder="0.00" required>
                         </div>
@@ -56,7 +56,7 @@
 
                     <!-- Description Field -->
                     <div>
-                        <label for="description" class="block mb-2 text-sm font-medium text-gray-900">Description</label>
+                        <label for="description" class="block mb-2 text-sm font-medium text-gray-900">Description *</label>
                         <div class="relative">
                             <input type="text" name="description" id="description-input" value="{{values.description}}"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
@@ -71,7 +71,7 @@
 
                     <!-- Category Field -->
                     <div>
-                        <label for="category" class="block mb-2 text-sm font-medium text-gray-900">Category</label>
+                        <label for="category" class="block mb-2 text-sm font-medium text-gray-900">Category *</label>
                         <input type="text" name="category" id="category-input" value="{{values.category}}"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                             placeholder="Category will be predicted..." required>
@@ -80,15 +80,17 @@
 
                     <!-- Date Field -->
                     <div>
-                        <label for="expense_date" class="block mb-2 text-sm font-medium text-gray-900">Date of Expense</label>
+                        <label for="expense_date" class="block mb-2 text-sm font-medium text-gray-900">Date of Expense *</label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                 <svg class="w-4 h-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"/>
                                 </svg>
                             </div>
-                            <input type="date" name="expense_date" 
+                            <input type="date" name="expense_date" id="expense_date"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5"
+                                value="{% now 'Y-m-d' %}" 
+                                max="{% now 'Y-m-d' %}"
                                 required>
                         </div>
                     </div>
@@ -153,5 +155,15 @@ function getCookie(name) {
 
 // Add event listener
 document.getElementById('description-input').addEventListener('input', predictCategory);
+
+document.getElementById('expense-form').addEventListener('submit', function(e) {
+    const formData = new FormData(this);
+    const dateValue = formData.get('expense_date');
+    
+    console.log('Submitting expense with date:', dateValue);
+    
+    // Let the form submit normally - remove preventDefault
+    return true;
+});
 </script>
 {% endblock js %}

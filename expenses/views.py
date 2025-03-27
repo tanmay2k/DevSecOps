@@ -110,6 +110,22 @@ def index(request):
 
 daily_expense_amounts = {}
 
+def send_limit_notification(user, amount):
+    try:
+        subject = 'Daily Expense Limit Exceeded'
+        message = f'Hello {user.username},\n\nYour expenses for today have exceeded your daily expense limit.'
+        send_mail(
+            subject, 
+            message, 
+            settings.EMAIL_HOST_USER, 
+            [user.email], 
+            fail_silently=True  # Changed to True to prevent validation errors
+        )
+        return True
+    except Exception as e:
+        print(f"Email error: {str(e)}")
+        return False
+
 @login_required(login_url='/authentication/login')
 def add_expense(request):
     categories = Category.objects.all()
@@ -117,67 +133,63 @@ def add_expense(request):
         'categories': categories,
         'values': request.POST
     }
-    if request.method == 'GET':
-        return render(request, 'expenses/add_expense.html', context)
-
+    
     if request.method == 'POST':
-        amount = request.POST['amount']
-        date_str = request.POST.get('expense_date')
-        
-        if not amount:
-            messages.error(request, 'Amount is required')
-            return render(request, 'expenses/add_expense.html', context)
-        description = request.POST['description']
-        date = request.POST['expense_date']
-        predicted_category = request.POST['category']
+        amount = request.POST.get('amount', '')
+        description = request.POST.get('description', '')
+        category = request.POST.get('category', '')
+        date_str = request.POST.get('expense_date', '')
 
-        if not description:
-            messages.error(request, 'description is required')
-            return render(request, 'expenses/add_expense.html', context)
-        
-        initial_predicted_category = request.POST.get('initial_predicted_category')
-        if predicted_category != initial_predicted_category:
-            new_data = {
-            'description': description,
-            'category': predicted_category,
-        }
+        print(f"Processing expense with date: {date_str}")
 
-        update_url = 'http://127.0.0.1:8000/api/update-dataset/'
-        response = requests.post(update_url, json={'new_data': new_data})
+        if not all([amount, description, category, date_str]):
+            messages.error(request, 'All fields are required')
+            return render(request, 'expenses/add_expense.html', context)
 
         try:
-            date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+            # First validate and create the expense
+            expense_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
             today = datetime.date.today()
 
-            if date > today:
+            if expense_date > today:
                 messages.error(request, 'Date cannot be in the future')
                 return render(request, 'expenses/add_expense.html', context)
-            
+
+            # Create the expense first
+            expense = Expense.objects.create(
+                owner=request.user,
+                amount=amount,
+                date=expense_date,
+                category=category,
+                description=description
+            )
+
+            # Then check expense limits and send email if needed
             user = request.user
             expense_limits = ExpenseLimit.objects.filter(owner=user)
             if expense_limits.exists():
-                daily_expense_limit = expense_limits.first().daily_expense_limit
-            else:
-                daily_expense_limit = 5000  
+                daily_limit = expense_limits.first().daily_expense_limit
+                total_expenses = get_expense_of_day(user)
+                
+                if total_expenses > daily_limit:
+                    if send_limit_notification(user, amount):
+                        messages.warning(request, 'Daily expense limit exceeded. Notification sent.')
+                    else:
+                        messages.warning(request, 'Daily expense limit exceeded.')
 
-            
-            total_expenses_today = get_expense_of_day(user) + float(amount)
-            if total_expenses_today > daily_expense_limit:
-                subject = 'Daily Expense Limit Exceeded'
-                message = f'Hello {user.username},\n\nYour expenses for today have exceeded your daily expense limit. Please review your expenses.'
-                from_email = settings.EMAIL_HOST_USER
-                to_email = [user.email]
-                send_mail(subject, message, from_email, to_email, fail_silently=False)
-                messages.warning(request, 'Your expenses for today exceed your daily expense limit')
-
-            Expense.objects.create(owner=request.user, amount=amount, date=date,
-                                   category=predicted_category, description=description)
             messages.success(request, 'Expense saved successfully')
             return redirect('expenses')
-        except ValueError:
-            messages.error(request, 'Invalid date format')
+
+        except ValueError as e:
+            print(f"Date error: {str(e)}")
+            messages.error(request, 'Please select a valid date')
+            return render(request, 'expenses/add_expense.html', context)
+        except Exception as e:
+            print(f"General error: {str(e)}")
+            messages.error(request, 'An error occurred while saving')
             return render(request, 'expenses/add_expense.html', context)
 
+    return render(request, 'expenses/add_expense.html', context)
 
 @login_required(login_url='/authentication/login')
 def expense_edit(request, id):
