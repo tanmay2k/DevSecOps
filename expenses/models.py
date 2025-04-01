@@ -6,11 +6,21 @@ from django.utils.timezone import now
 
 
 class Expense(models.Model):
+    RECURRING_CHOICES = [
+        ('NO', 'No'),
+        ('DAILY', 'Daily'),
+        ('WEEKLY', 'Weekly'),
+        ('MONTHLY', 'Monthly'),
+        ('YEARLY', 'Yearly'),
+    ]
+
     amount = models.FloatField()
     date = models.DateField(default=now)
     description = models.TextField()
     owner = models.ForeignKey(to=User, on_delete=models.CASCADE)
     category = models.CharField(max_length=266)
+    is_recurring = models.CharField(max_length=10, choices=RECURRING_CHOICES, default='NO')
+    recurring_end_date = models.DateField(null=True, blank=True)
 
     def __str__(self):
         return self.category
@@ -30,4 +40,7 @@ class Category(models.Model):
 
 class ExpenseLimit(models.Model):
     owner = models.ForeignKey(to=User, on_delete=models.CASCADE)
-    daily_expense_limit=models.IntegerField()
+    daily_expense_limit = models.IntegerField()
+
+    def __str__(self):
+        return f"{self.owner}'s daily limit: {self.daily_expense_limit}"

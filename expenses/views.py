@@ -1,18 +1,14 @@
-from django.shortcuts import render, redirect,HttpResponseRedirect
+from django.shortcuts import render, redirect, HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
-from .models import Category, Expense
 from django.contrib import messages
+from django.utils import timezone
+from datetime import datetime, date, timedelta
+from .models import Category, Expense, ExpenseLimit
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 import json
 from django.http import JsonResponse
 from userpreferences.models import UserPreference
-import datetime
-import requests
-import pandas as pd
-from sklearn.feature_extraction.text import TfidfVectorizer
-from django.contrib.sessions.models import Session
-from datetime import date
 import requests
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -20,23 +16,9 @@ from sklearn.ensemble import RandomForestClassifier
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 import nltk
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
-from django.contrib import messages
-import datetime
-from .models import ExpenseLimit
 from django.core.mail import send_mail
 from django.conf import settings
 from django.db.models import Sum, Avg
-from django.utils import timezone
-from datetime import timedelta
-import json
-from django.db.models import Sum
-from django.utils import timezone
-from datetime import timedelta
-import json
-from .models import Expense, Category, ExpenseLimit
-from userpreferences.models import UserPreference
 
 data = pd.read_csv('dataset.csv')
 
@@ -60,6 +42,7 @@ X = tfidf_vectorizer.fit_transform(data['clean_description'])
 # Train a RandomForestClassifier
 model = RandomForestClassifier()
 model.fit(X, data['category'])
+
 @login_required(login_url='/authentication/login')
 def search_expenses(request):
     if request.method == 'POST':
@@ -113,18 +96,19 @@ daily_expense_amounts = {}
 def send_limit_notification(user, amount):
     try:
         subject = 'Daily Expense Limit Exceeded'
-        message = f'Hello {user.username},\n\nYour expenses for today have exceeded your daily expense limit.'
-        send_mail(
-            subject, 
-            message, 
-            settings.EMAIL_HOST_USER, 
-            [user.email], 
-            fail_silently=True  # Changed to True to prevent validation errors
-        )
+        message = f'Your daily expenses ({amount}) have exceeded your set limit.'
+        from_email = settings.EMAIL_HOST_USER
+        recipient_list = [user.email]
+        send_mail(subject, message, from_email, recipient_list)
         return True
     except Exception as e:
-        print(f"Email error: {str(e)}")
+        print(f"Error sending notification: {str(e)}")
         return False
+
+def get_expense_of_day(user):
+    today = date.today()
+    expenses = Expense.objects.filter(owner=user, date=today)
+    return sum(expense.amount for expense in expenses)
 
 @login_required(login_url='/authentication/login')
 def add_expense(request):
@@ -139,54 +123,51 @@ def add_expense(request):
         description = request.POST.get('description', '')
         category = request.POST.get('category', '')
         date_str = request.POST.get('expense_date', '')
-
-        print(f"Processing expense with date: {date_str}")
+        is_recurring = request.POST.get('is_recurring', 'NO')
+        recurring_end_date = request.POST.get('recurring_end_date')
 
         if not all([amount, description, category, date_str]):
             messages.error(request, 'All fields are required')
             return render(request, 'expenses/add_expense.html', context)
 
         try:
-            # First validate and create the expense
-            expense_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
-            today = datetime.date.today()
+            # Convert date string to date object
+            expense_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            today = date.today()
 
             if expense_date > today:
                 messages.error(request, 'Date cannot be in the future')
                 return render(request, 'expenses/add_expense.html', context)
 
-            # Create the expense first
-            expense = Expense.objects.create(
+            # Check expense limit
+            user = request.user
+            expense_limit = ExpenseLimit.objects.filter(owner=user).first()
+            
+            if expense_limit:
+                daily_total = get_expense_of_day(user) + float(amount)
+                if daily_total > expense_limit.daily_expense_limit:
+                    send_limit_notification(user, daily_total)
+                    messages.warning(request, 'Daily expense limit exceeded!')
+
+            # Create expense
+            Expense.objects.create(
                 owner=request.user,
                 amount=amount,
                 date=expense_date,
                 category=category,
-                description=description
+                description=description,
+                is_recurring=is_recurring,
+                recurring_end_date=datetime.strptime(recurring_end_date, '%Y-%m-%d').date() if recurring_end_date else None
             )
-
-            # Then check expense limits and send email if needed
-            user = request.user
-            expense_limits = ExpenseLimit.objects.filter(owner=user)
-            if expense_limits.exists():
-                daily_limit = expense_limits.first().daily_expense_limit
-                total_expenses = get_expense_of_day(user)
-                
-                if total_expenses > daily_limit:
-                    if send_limit_notification(user, amount):
-                        messages.warning(request, 'Daily expense limit exceeded. Notification sent.')
-                    else:
-                        messages.warning(request, 'Daily expense limit exceeded.')
 
             messages.success(request, 'Expense saved successfully')
             return redirect('expenses')
 
         except ValueError as e:
-            print(f"Date error: {str(e)}")
-            messages.error(request, 'Please select a valid date')
+            messages.error(request, f'Invalid date format: {str(e)}')
             return render(request, 'expenses/add_expense.html', context)
         except Exception as e:
-            print(f"General error: {str(e)}")
-            messages.error(request, 'An error occurred while saving')
+            messages.error(request, f'Error saving expense: {str(e)}')
             return render(request, 'expenses/add_expense.html', context)
 
     return render(request, 'expenses/add_expense.html', context)
@@ -210,7 +191,6 @@ def expense_edit(request, id):
             messages.error(request, 'Amount is required')
             return render(request, 'expenses/edit-expense.html', context)
         description = request.POST['description']
-        date = request.POST['expense_date']
         category = request.POST['category']
 
         if not description:
@@ -218,39 +198,27 @@ def expense_edit(request, id):
             return render(request, 'expenses/edit-expense.html', context)
 
         try:
-            # Convert the date string to a datetime object and validate the date
-            date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
-            today = datetime.date.today()
+            # Use datetime directly, not datetime.datetime
+            expense_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            today = date.today()
 
-            if date > today:
+            if expense_date > today:
                 messages.error(request, 'Date cannot be in the future')
-                return render(request, 'expenses/add_expense.html', context)
+                return render(request, 'expenses/edit-expense.html', context)
 
             expense.owner = request.user
             expense.amount = amount
-            expense. date = date
+            expense.date = expense_date
             expense.category = category
             expense.description = description
 
             expense.save()
-            messages.success(request, 'Expense saved successfully')
+            messages.success(request, 'Expense updated successfully')
 
             return redirect('expenses')
-        except ValueError:
-            messages.error(request, 'Invalid date format')
-            return render(request, 'expenses/edit_income.html', context)
-
-        # expense.owner = request.user
-        # expense.amount = amount
-        # expense. date = date
-        # expense.category = category
-        # expense.description = description
-
-        # expense.save()
-
-        # messages.success(request, 'Expense updated  successfully')
-
-        # return redirect('expenses')
+        except ValueError as e:
+            messages.error(request, f'Invalid date format: {str(e)}')
+            return render(request, 'expenses/edit-expense.html', context)
 
 @login_required(login_url='/authentication/login')
 def delete_expense(request, id):
@@ -261,8 +229,8 @@ def delete_expense(request, id):
 
 @login_required(login_url='/authentication/login')
 def expense_category_summary(request):
-    todays_date = datetime.date.today()
-    six_months_ago = todays_date-datetime.timedelta(days=30*6)
+    todays_date = date.today()
+    six_months_ago = todays_date - timedelta(days=30*6)
     expenses = Expense.objects.filter(owner=request.user,
                                       date__gte=six_months_ago, date__lte=todays_date)
     finalrep = {}
@@ -381,11 +349,5 @@ def set_expense_limit(request):
         return HttpResponseRedirect('/preferences/')
     else:
         return HttpResponseRedirect('/preferences/')
-    
-def get_expense_of_day(user):
-    current_date=date.today()
-    expenses=Expense.objects.filter(owner=user,date=current_date)
-    total_expenses=sum(expense.amount for expense in expenses)
-    return total_expenses
 
 
