@@ -1,0 +1,180 @@
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Goal
+from userincome.models import UserIncome
+from expenses.models import Expense
+from .forms import GoalForm, AddAmountForm
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.core.mail import send_mail
+from django.db.models import Sum
+from django.utils import timezone
+import json
+from decimal import Decimal
+from openai import OpenAI
+from django.conf import settings
+import logging
+
+
+client = OpenAI(
+	base_url="https://api-inference.huggingface.co/v1/",
+    api_key="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",
+)
+def generate_ai_recommendations(user):
+    # Fetch user data
+    goals = Goal.objects.filter(owner=user)
+    incomes = UserIncome.objects.filter(owner=user)
+    expenses = Expense.objects.filter(owner=user)
+    
+    # Convert Decimal values to floats for JSON serialization
+    current_month = timezone.now().month
+    monthly_income = float(incomes.filter(date__month=current_month).aggregate(Sum('amount'))['amount__sum'] or 0.0)
+    monthly_expenses = float(expenses.filter(date__month=current_month).aggregate(Sum('amount'))['amount__sum'] or 0.0)
+    net_cash_flow = monthly_income - monthly_expenses
+    
+    # Convert Decimal to float in expense analysis
+    expense_analysis = expenses.values('category').annotate(total=Sum('amount')).order_by('-total')
+    top_expenses = [{
+        "category": e['category'], 
+        "amount": float(e['total'])
+    } for e in expense_analysis[:3]]
+    
+    # Convert Decimal to float in goals analysis
+    goals_analysis = []
+    for goal in goals:
+        progress = goal.calculate_progress()
+        goals_analysis.append({
+            "name": goal.name,
+            "progress": float(progress['saved_percentage']),
+            "daily_required": float(progress['daily_savings_required']),
+            "status": "behind" if progress['daily_savings_required'] > Decimal('0') else "on_track"
+        })
+    
+    # Create proper message structure for OpenAI API
+    messages = [
+        {
+            "role": "system",
+            "content": """You are a financial advisor providing personalized recommendations. 
+            Provide specific, actionable recommendations to help improve savings and investments. 
+            Consider:
+            1. Expense reduction opportunities
+            2. Savings goal adjustments
+            3. Investment suggestions based on surplus
+            4. Behavioral financial advice
+            5. Risk management strategies
+            
+            Format the response with clear sections and bullet points. Use simple language."""
+        },
+        {
+            "role": "user",
+            "content": f"""Here is my financial data:
+            
+            Monthly Income: ₹{monthly_income:.2f}
+            Monthly Expenses: ₹{monthly_expenses:.2f}
+            Net Cash Flow: ₹{net_cash_flow:.2f}
+            
+            Top Expense Categories:
+            {json.dumps(top_expenses, indent=2)}
+            
+            Savings Goals Progress:
+            {json.dumps(goals_analysis, indent=2)}
+            
+            Please provide recommendations based on this data."""
+        }
+    ]
+    
+    # Make API request to OpenAI
+    try:
+        response = client.chat.completions.create(
+            model="microsoft/Phi-3.5-mini-instruct",  # Replace with actual model name if different
+            messages=messages,
+            temperature=0.7,
+            max_tokens=500
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        logging.error(f"Error generating recommendations: {str(e)}")
+        return "Unable to generate recommendations at this time. Please try again later."
+@login_required
+def add_goal(request):
+    if request.method == 'POST':
+        form = GoalForm(request.POST)
+        if form.is_valid():
+            goal = form.save(commit=False)  # Delay saving to add owner
+            goal.owner = request.user
+            goal.save()
+            return redirect('list_goals')
+        else:
+            # If form is invalid, re-render with error messages
+            return render(request, 'goals/add_goals.html', {'form': form})
+    else:
+        # For non-POST requests, show the form (optional)
+        form = GoalForm()
+        return render(request, 'goals/add_goals.html', {'form': form})
+
+@login_required(login_url='/authentication/login')
+def list_goals(request):
+
+    # goals = Goal.objects.all()
+    goals = Goal.objects.filter(owner=request.user)
+    ai_recommendations = generate_ai_recommendations(request.user)
+    
+    context = {
+        'goals': goals,
+        'ai_recommendations': ai_recommendations
+    }
+    add_amount_form = AddAmountForm() 
+    return render(request, 'goals/list_goals.html', context)
+
+
+@login_required(login_url='/authentication/login')
+def add_amount(request, goal_id):
+    goal = get_object_or_404(Goal, pk=goal_id)
+
+    if request.method == 'POST':
+        form = AddAmountForm(request.POST)
+        if form.is_valid():
+            additional_amount = form.cleaned_data['additional_amount']
+            amount_required = goal.amount_to_save - goal.current_saved_amount
+
+            if additional_amount > amount_required:
+                messages.error(request, f'The maximum amount needed to achieve goal is : {amount_required}.')
+            else:
+                goal.current_saved_amount += additional_amount
+                goal.save()
+
+                # Check if the goal is achieved
+                if goal.current_saved_amount == goal.amount_to_save:
+                    # Send congratulatory email to the user
+                        
+                        send_congratulatory_email(request.user.email, goal)
+                        messages.success(request, 'Congratulations! You have achieved your goal.')
+
+                        # Disable the "Add Amount" button
+                        goal.is_achieved = True
+                        goal.delete()
+               
+                else:
+                    messages.success(request, f'Amount successfully added. Total saved amount: {goal.current_saved_amount}.')
+                    messages.info(request, f'Amount required to reach goal: {amount_required}.')
+
+        return redirect('list_goals')
+
+    # Redirect to list_goals if the request method is not POST
+    return redirect('list_goals')
+
+def send_congratulatory_email(email, goal):
+    subject = 'Congratulations on achieving your goal!'
+    message = f'Dear User,\n\nCongratulations on achieving your goal "{goal.name}". You have successfully saved {goal.amount_to_save}.\n\nKeep up the good work!\n\nBest regards,\nThe Goal Tracker Team, \nWealthWizard Team'
+    send_mail(subject, message, '<your email>', [email])
+    
+    
+
+
+
+def delete_goal(request, goal_id):
+    try:
+        goal = Goal.objects.get(id=goal_id,owner=request.user)
+        goal.delete()
+        return redirect('list_goals')
+    except Goal.DoesNotExist:
+        pass

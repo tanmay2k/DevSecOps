@@ -1,0 +1,36 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*.sqlite3
+
+# Frontend builds
+dist/
+build/
+.cache/
+.next/
+
+# Logs
+*.log
+logs/
+
+# Env & config
+.env
+.env.*
+
+# IDEs & editors
+.vscode/
+.idea/
+*.swp
+
+# OS bullshit
+.DS_Store
+Thumbs.db
+
+# Misc
+coverage/
+tmp/
+
