@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block css %}
+<style>
+    :root {
+        color-scheme: light dark;
+    }
+    
+    .status-positive {
+        color: #059669;
+    }
+    
+    .status-neutral {
+        color: #D97706;
+    }
+    
+    .status-negative {
+        color: #EF4444;
+    }
+    
+    .dark .status-positive {
+        color: #34D399;
+    }
+    
+    .dark .status-neutral {
+        color: #FBBF24;
+    }
+    
+    .dark .status-negative {
+        color: #EF4444;
+    }
+</style>
+{% endblock css %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
+        <i class="fas fa-chart-line mr-2"></i>Income-Expense Report
+    </h1>
+
+    <!-- Error Messages -->
+    {% if messages %}
+    <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-red-900 dark:text-red-200" role="alert">
+        {% for message in messages %}
+        <span class="font-medium">{{ message }}</span>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Date Range Form -->
+    <form method="post" action="{% url 'generate-report' %}" class="mb-8">
+        {% csrf_token %}
+        <div class="grid md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label for="start_date" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Start Date:</label>
+                <input type="date" name="start_date" 
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" 
+                    required>
+            </div>
+            <div>
+                <label for="end_date" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">End Date:</label>
+                <input type="date" name="end_date" 
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" 
+                    required>
+            </div>
+        </div>
+        <button type="submit" id="generate-report" 
+            class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
+            <i class="fas fa-file-invoice mr-2"></i>Generate Report
+        </button>
+    </form>
+
+    {% if incomes %}
+    <!-- Income Table -->
+    <div class="mb-8">
+        <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+            <i class="fas fa-money-bill-trend-up mr-2"></i>Total Income
+        </h2>
+        <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+            <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                    <tr>
+                        <th scope="col" class="px-6 py-3">Date</th>
+                        <th scope="col" class="px-6 py-3">Source</th>
+                        <th scope="col" class="px-6 py-3">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for income in incomes %}
+                    <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                        <td class="px-6 py-4">{{ income.date }}</td>
+                        <td class="px-6 py-4">{{ income.source }}</td>
+                        <td class="px-6 py-4">&#8377; {{ income.amount }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if expenses %}
+    <!-- Expense Table -->
+    <div class="mb-8">
+        <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+            <i class="fas fa-receipt mr-2"></i>Total Expenses
+        </h2>
+        <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+            <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                    <tr>
+                        <th scope="col" class="px-6 py-3">Date</th>
+                        <th scope="col" class="px-6 py-3">Category</th>
+                        <th scope="col" class="px-6 py-3">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for expense in expenses %}
+                    <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                        <td class="px-6 py-4">{{ expense.date }}</td>
+                        <td class="px-6 py-4">{{ expense.category }}</td>
+                        <td class="px-6 py-4">&#8377; {{ expense.amount }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if total_income is not None and total_expense is not None %}
+    <!-- Summary Section -->
+    <div class="grid md:grid-cols-2 gap-4 mb-8">
+        <div class="p-6 bg-white rounded-lg border border-gray-200 shadow-md dark:bg-gray-800 dark:border-gray-700">
+            <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+                <i class="fas fa-piggy-bank mr-2"></i>Financial Summary
+            </h2>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-700 dark:text-gray-300">Total Income:</span>
+                    <span class="font-semibold text-gray-900 dark:text-white">&#8377; {{ total_income }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-700 dark:text-gray-300">Total Expenses:</span>
+                    <span class="font-semibold text-gray-900 dark:text-white">&#8377; {{ total_expense }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-700 dark:text-gray-300">Total Savings:</span>
+                    <span class="font-semibold text-gray-900 dark:text-white">&#8377; {% if savings < 0 %}0{% else %}{{ savings }}{% endif %}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6 bg-white rounded-lg border border-gray-200 shadow-md dark:bg-gray-800 dark:border-gray-700">
+            <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Status</h2>
+            {% if savings > 0 %}
+            <div class="flex items-center">
+                <i class="fas fa-circle-check text-3xl mr-2 status-positive"></i>
+                <p class="status-positive">You saved money this period!</p>
+            </div>
+            {% elif savings == 0 %}
+            <div class="flex items-center">
+                <i class="fas fa-circle-minus text-3xl mr-2 status-neutral"></i>
+                <p class="status-neutral">Your income and expenses balanced.</p>
+            </div>
+            {% else %}
+            <div class="flex items-center">
+                <i class="fas fa-circle-exclamation text-3xl mr-2 status-negative"></i>
+                <p class="status-negative">Your expenses exceeded your income this period.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Export Options -->
+    {% if report_generated %}
+    <div class="mb-8">
+        <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+            <i class="fas fa-file-export mr-2"></i>Export Options
+        </h2>
+        <div class="flex flex-wrap gap-3">
+            <a href="{% url 'export_pdf' %}?start_date={{ start_date }}&end_date={{ end_date }}"
+                class="text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-green-600 dark:hover:bg-green-700 focus:outline-none dark:focus:ring-green-800">
+                <i class="fas fa-file-pdf mr-2"></i>Export as PDF
+            </a>
+            <a href="{% url 'export_csv' %}?start_date={{ start_date }}&end_date={{ end_date }}"
+                class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
+                <i class="fas fa-file-csv mr-2"></i>Export as CSV
+            </a>
+            <a href="{% url 'export_xlsx' %}?start_date={{ start_date }}&end_date={{ end_date }}"
+                class="text-white bg-yellow-700 hover:bg-yellow-800 focus:ring-4 focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-yellow-600 dark:hover:bg-yellow-700 focus:outline-none dark:focus:ring-yellow-800">
+                <i class="fas fa-file-excel mr-2"></i>Export as XLSX
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock content %}

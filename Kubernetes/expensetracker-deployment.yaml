@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: expensetracker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: expensetracker
+  template:
+    metadata:
+      labels:
+        app: expensetracker
+    spec:
+      containers:
+        - name: expensetracker
+          image: tlad1/expensetracker-web:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: SQL_HOST
+              value: postgres
+

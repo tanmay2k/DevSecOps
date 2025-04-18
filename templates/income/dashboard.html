@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block link %}
+<!-- Flowbite CSS -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.css" rel="stylesheet">
+<!-- FontAwesome -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+<!-- Custom styles -->
+<style>
+    :root {
+        color-scheme: light dark;
+    }
+    
+    .dark .dark\:bg-gray-800 {
+        background-color: var(--tw-gray-800);
+    }
+    
+    .dark .dark\:text-white {
+        color: var(--tw-text-white);
+    }
+</style>
+{% endblock link %}
+
+{% block content %}
+<div class="p-4 sm:ml-64">
+    <!-- Page Header -->
+    <div class="flex items-center justify-between mb-4">
+        <h1 class="text-2xl font-semibold dark:text-white">Dashboard</h1>
+        <a href="{% url 'report' %}" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+            <i class="fas fa-download mr-2"></i> Generate Report
+        </a>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        <!-- Daily Earnings Card -->
+        <div class="p-4 bg-white rounded-lg shadow dark:bg-gray-800">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Daily Earnings</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">₹{{ daily_income }}</p>
+                </div>
+                <div class="p-3 bg-blue-100 rounded-full dark:bg-blue-900">
+                    <i class="fas fa-calendar text-blue-500 dark:text-blue-300"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weekly Earnings Card -->
+        <div class="p-4 bg-white rounded-lg shadow dark:bg-gray-800">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Weekly Earnings</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">₹{{ weekly_income }}</p>
+                </div>
+                <div class="p-3 bg-green-100 rounded-full dark:bg-green-900">
+                    <i class="fas fa-dollar-sign text-green-500 dark:text-green-300"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Earnings Card -->
+        <div class="p-4 bg-white rounded-lg shadow dark:bg-gray-800">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Monthly Earnings</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">₹{{ monthly_income }}</p>
+                </div>
+                <div class="p-3 bg-cyan-100 rounded-full dark:bg-cyan-900">
+                    <i class="fas fa-clipboard-list text-cyan-500 dark:text-cyan-300"></i>
+                </div>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mt-4 dark:bg-gray-700">
+                <div class="bg-cyan-600 h-2.5 rounded-full dark:bg-cyan-500" style="width: 50%"></div>
+            </div>
+        </div>
+
+        <!-- Yearly Earnings Card -->
+        <div class="p-4 bg-white rounded-lg shadow dark:bg-gray-800">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Yearly Earnings</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">₹{{ yearly_income }}</p>
+                </div>
+                <div class="p-3 bg-yellow-100 rounded-full dark:bg-yellow-900">
+                    <i class="fas fa-chart-bar text-yellow-500 dark:text-yellow-300"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-1 gap-4">
+        <!-- Area Chart -->
+        <div class="p-4 bg-white rounded-lg shadow dark:bg-gray-800">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Earnings Overview</h3>
+                <button data-dropdown-toggle="earnings-dropdown" class="p-2 text-gray-500 rounded-lg hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700">
+                    <i class="fas fa-ellipsis-v"></i>
+                </button>
+                <!-- Dropdown menu -->
+                <div id="earnings-dropdown" class="hidden z-10 w-44 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600">
+                    <ul class="py-1 text-sm text-gray-700 dark:text-gray-200">
+                        <li>
+                            <a href="#" class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Export Data</a>
+                        </li>
+                        <li>
+                            <a href="#" class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Share Report</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="relative">
+                <canvas id="myAreaChart" data-url="{% url 'monthly_income_data' %}" class="w-full h-72"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Custom Chart Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('myAreaChart');
+    const url = ctx.getAttribute('data-url');
+
+    // Theme-aware chart configuration
+    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const textColor = isDarkMode ? '#fff' : '#666';
+    const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [], // Will be populated with months
+            datasets: [{
+                label: 'Monthly Earnings',
+                fill: true,
+                backgroundColor: isDarkMode ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.1)',
+                borderColor: '#3b82f6',
+                tension: 0.4,
+                data: [] // Will be populated with income data
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: textColor
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    ticks: { color: textColor },
+                    grid: { color: gridColor }
+                },
+                x: {
+                    ticks: { color: textColor },
+                    grid: { color: gridColor }
+                }
+            }
+        }
+    });
+
+    // Fetch and update chart data
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            chart.data.datasets[0].data = data.monthly_income_data;
+            chart.data.labels = data.months || Array.from({length: data.monthly_income_data.length}, (_, i) => `Month ${i + 1}`);
+            chart.update();
+        })
+        .catch(error => console.error("Error fetching data:", error));
+
+    // Handle system theme changes
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+        const isDark = e.matches;
+        chart.options.scales.y.ticks.color = isDark ? '#fff' : '#666';
+        chart.options.scales.x.ticks.color = isDark ? '#fff' : '#666';
+        chart.options.scales.y.grid.color = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+        chart.options.scales.x.grid.color = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+        chart.options.plugins.legend.labels.color = isDark ? '#fff' : '#666';
+        chart.update();
+    });
+});
+</script>
+{% endblock content %}
