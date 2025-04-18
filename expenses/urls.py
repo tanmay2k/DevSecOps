@@ -5,6 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 urlpatterns = [
      path('', views.home, name="home"),
+     path('', views.home, name="landing"),  # Ensure the 'landing' name is defined here
 
     path('expenses', views.index, name="expenses"),
     path('add-expense', views.add_expense, name="add-expenses"),
@@ -17,5 +18,9 @@ urlpatterns = [
     path('stats', views.stats_view,
          name="stats"),
     path('set-daily-expense-limit/', views.set_expense_limit, name="set-daily-expense-limit"),
-    path('set-limit/', views.set_expense_limit, name='set-expense-limit')
+    path('set-limit/', views.set_expense_limit, name='set-expense-limit'),
+    path('about/', views.about, name="about"),
+    path('contact/', views.contact, name="contact"),
+    path('privacy/', views.privacy, name="privacy"),
+    path('terms/', views.terms, name="terms"),
 ]

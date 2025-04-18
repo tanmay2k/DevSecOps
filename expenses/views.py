@@ -23,7 +23,12 @@ from django.db.models import Sum, Avg
 data = pd.read_csv('dataset.csv')
 
 # Preprocessing
-stop_words = set(stopwords.words('english'))
+try:
+    nltk.download('stopwords')  # Ensure stopwords corpus is downloaded
+    stop_words = set(stopwords.words('english'))
+except Exception as e:
+    stop_words = set()  # Fallback to an empty set if download fails
+    print(f"Error downloading stopwords: {str(e)}")
 
 def home(request):
     return render(request, 'expenses/landing.html')
@@ -125,8 +130,9 @@ def add_expense(request):
         date_str = request.POST.get('expense_date', '')
         is_recurring = request.POST.get('is_recurring', 'NO')
         recurring_end_date = request.POST.get('recurring_end_date')
+        spent_by = request.POST.get('spent_by', 'Self')  # New field
 
-        if not all([amount, description, category, date_str]):
+        if not all([amount, description, category, date_str, spent_by]):
             messages.error(request, 'All fields are required')
             return render(request, 'expenses/add_expense.html', context)
 
@@ -157,7 +163,8 @@ def add_expense(request):
                 category=category,
                 description=description,
                 is_recurring=is_recurring,
-                recurring_end_date=datetime.strptime(recurring_end_date, '%Y-%m-%d').date() if recurring_end_date else None
+                recurring_end_date=datetime.strptime(recurring_end_date, '%Y-%m-%d').date() if recurring_end_date else None,
+                spent_by=spent_by  # Save the new field
             )
 
             messages.success(request, 'Expense saved successfully')
@@ -186,6 +193,7 @@ def expense_edit(request, id):
     if request.method == 'POST':
         amount = request.POST['amount']
         date_str = request.POST.get('expense_date')
+        spent_by = request.POST.get('spent_by', 'Self')  # New field
 
         if not amount:
             messages.error(request, 'Amount is required')
@@ -211,6 +219,7 @@ def expense_edit(request, id):
             expense.date = expense_date
             expense.category = category
             expense.description = description
+            expense.spent_by = spent_by  # Update the new field
 
             expense.save()
             messages.success(request, 'Expense updated successfully')
@@ -349,5 +358,17 @@ def set_expense_limit(request):
         return HttpResponseRedirect('/preferences/')
     else:
         return HttpResponseRedirect('/preferences/')
+
+def about(request):
+    return render(request, 'expenses/about.html')
+
+def contact(request):
+    return render(request, 'expenses/contact.html')
+
+def privacy(request):
+    return render(request, 'expenses/privacy.html')
+
+def terms(request):
+    return render(request, 'expenses/terms.html')
 
 

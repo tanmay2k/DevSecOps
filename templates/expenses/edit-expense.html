@@ -82,6 +82,20 @@
                         required>
                 </div>
 
+                <!-- Spent By Field -->
+                <div>
+                    <label for="spent_by" class="block mb-2 text-sm font-medium text-gray-900">Spent By</label>
+                    <select name="spent_by" id="spent_by" 
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
+                        required>
+                        <option value="Self" {% if values.spent_by == "Self" %}selected{% endif %}>Self</option>
+                        <option value="Dad" {% if values.spent_by == "Dad" %}selected{% endif %}>Dad</option>
+                        <option value="Mom" {% if values.spent_by == "Mom" %}selected{% endif %}>Mom</option>
+                        <option value="Sister" {% if values.spent_by == "Sister" %}selected{% endif %}>Sister</option>
+                        <option value="Brother" {% if values.spent_by == "Brother" %}selected{% endif %}>Brother</option>
+                    </select>
+                </div>
+
                 <!-- Date Field -->
                 <div>
                     <label for="expense_date" class="block mb-2 text-sm font-medium text-gray-900">Date of Expense</label>

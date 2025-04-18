@@ -180,10 +180,6 @@
                         Get Started Free
                         <i class="fas fa-arrow-right ml-2"></i>
                     </a>
-                    <a href="https://youtube.com" class="inline-flex justify-center items-center py-3 px-5 text-base font-medium text-center text-white rounded-lg border border-white hover:bg-blue-700 focus:ring-4 focus:ring-blue-800">
-                        Watch Demo
-                        <i class="fas fa-play ml-2"></i>
-                    </a>
                 </div>
             </div>
         </div>
@@ -191,29 +187,25 @@
 
     <!-- Footer -->
     <footer class="bg-white dark:bg-gray-800">
-        <div class="max-w-screen-xl p-4 py-6 mx-auto lg:py-16 md:p-8 lg:p-10">
-            <div class="grid grid-cols-2 gap-8 md:grid-cols-3 lg:grid-cols-5">
+        <div class="max-w-screen-xl p-4 py-6 mx-auto lg:py-16 md:p-8 lg:p-10 text-center">
+            <div class="grid grid-cols-1 gap-8">
                 <div>
-                    <h3 class="mb-6 text-sm font-semibold text-gray-900 dark:text-white uppercase">Company</h3>
-                    <ul class="text-gray-500 dark:text-gray-300">
-                        <li class="mb-4"><a href="#" class="hover:text-gray-900 dark:hover:text-white">About</a></li>
-                        <li class="mb-4"><a href="#" class="hover:text-gray-900 dark:hover:text-white">Careers</a></li>
-                        <li class="mb-4"><a href="#" class="hover:text-gray-900 dark:hover:text-white">Blog</a></li>
+                    <h3 class="mb-6 text-lg font-bold text-gray-900 dark:text-white uppercase">Company</h3>
+                    <ul class="text-gray-500 dark:text-gray-300 text-lg">
+                        <li class="mb-4"><a href="{% url 'about' %}" class="hover:text-gray-900 dark:hover:text-white">About</a></li>
                     </ul>
                 </div>
                 <div>
-                    <h3 class="mb-6 text-sm font-semibold text-gray-900 dark:text-white uppercase">Help Center</h3>
-                    <ul class="text-gray-500 dark:text-gray-300">
-                        <li class="mb-4"><a href="#" class="hover:text-gray-900 dark:hover:text-white">Discord Server</a></li>
-                        <li class="mb-4"><a href="#" class="hover:text-gray-900 dark:hover:text-white">Twitter</a></li>
-                        <li class="mb-4"><a href="#" class="hover:text-gray-900 dark:hover:text-white">Contact Us</a></li>
+                    <h3 class="mb-6 text-lg font-bold text-gray-900 dark:text-white uppercase">Help Center</h3>
+                    <ul class="text-gray-500 dark:text-gray-300 text-lg">
+                        <li class="mb-4"><a href="{% url 'contact' %}" class="hover:text-gray-900 dark:hover:text-white">Contact Us</a></li>
                     </ul>
                 </div>
                 <div>
-                    <h3 class="mb-6 text-sm font-semibold text-gray-900 dark:text-white uppercase">Legal</h3>
-                    <ul class="text-gray-500 dark:text-gray-300">
-                        <li class="mb-4"><a href="#" class="hover:text-gray-900 dark:hover:text-white">Privacy Policy</a></li>
-                        <li class="mb-4"><a href="#" class="hover:text-gray-900 dark:hover:text-white">Terms &amp; Conditions</a></li>
+                    <h3 class="mb-6 text-lg font-bold text-gray-900 dark:text-white uppercase">Legal</h3>
+                    <ul class="text-gray-500 dark:text-gray-300 text-lg">
+                        <li class="mb-4"><a href="{% url 'privacy' %}" class="hover:text-gray-900 dark:hover:text-white">Privacy Policy</a></li>
+                        <li class="mb-4"><a href="{% url 'terms' %}" class="hover:text-gray-900 dark:hover:text-white">Terms & Conditions</a></li>
                     </ul>
                 </div>
             </div>

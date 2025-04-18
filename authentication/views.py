@@ -14,8 +14,10 @@ from .utils import account_activation_token
 from django.db import transaction
 from django.contrib import auth
 from django.contrib.auth.decorators import login_required
-# Create your views here.
+from .forms import LoginForm
+from django import forms
 
+# Create your views here.
 
 class EmailValidationView(View):
     def post(self, request):
@@ -140,3 +142,13 @@ class LogoutView(View):
             return redirect('login')
         else:
             return redirect('login')
+
+
+def login_view(request):
+    form = LoginForm()
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            # Handle login logic here
+            pass
+    return render(request, 'authentication/login.html', {'form': form})

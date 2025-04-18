@@ -88,52 +88,99 @@ def add_income(request):
     if(len(sources)==0):
         messages.info(request,"you need to add income sources first in order to add income")
         return HttpResponseRedirect('/account/')
+    
     context = {
         'sources': sources,
         'values': request.POST
     }
+
     if request.method == 'GET':
         return render(request, 'income/add_income.html', context)
 
     if request.method == 'POST':
         amount = request.POST['amount']
         date_str = request.POST.get('income_date')
+        description = request.POST['description']
+        source = request.POST['source']
+        is_recurring = request.POST.get('is_recurring', 'none')
+        end_date_str = request.POST.get('end_date')
+
         if not amount:
             messages.error(request, 'Amount is required')
             return render(request, 'income/add_income.html', context)
-        description = request.POST['description']
-        date = request.POST['income_date']
-        source = request.POST['source']
 
         if not description:
-            messages.error(request, 'description is required')
+            messages.error(request, 'Description is required')
             return render(request, 'income/add_income.html', context)
 
         try:
-            # Convert the date string to a datetime object and validate the date
-            date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            start_date = datetime.strptime(date_str, '%Y-%m-%d').date()
             today = datetime.now().date()
 
-            if date > today:
+            if start_date > today:
                 messages.error(request, 'Date cannot be in the future')
                 return render(request, 'income/add_income.html', context)
-                # return redirect('add-income', context)
 
-            UserIncome.objects.create(owner=request.user, amount=amount, date=date,
-                                      source=source, description=description)
+            # Handle recurring income
+            if is_recurring != 'none':
+                end_date = None
+                if end_date_str:
+                    end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+                    if end_date <= start_date:
+                        messages.error(request, 'End date must be after start date')
+                        return render(request, 'income/add_income.html', context)
+
+                # Create recurring entries
+                current_date = start_date
+                while True:
+                    if end_date and current_date > end_date:
+                        break
+
+                    UserIncome.objects.create(
+                        owner=request.user,
+                        amount=amount,
+                        date=current_date,
+                        source=source,
+                        description=description,
+                        is_recurring=is_recurring,
+                        end_date=end_date
+                    )
+
+                    # Calculate next date based on recurring type
+                    if is_recurring == 'daily':
+                        current_date += timedelta(days=1)
+                    elif is_recurring == 'weekly':
+                        current_date += timedelta(weeks=1)
+                    elif is_recurring == 'monthly':
+                        # Move to the same day next month
+                        if current_date.month == 12:
+                            current_date = current_date.replace(year=current_date.year + 1, month=1)
+                        else:
+                            current_date = current_date.replace(month=current_date.month + 1)
+                    elif is_recurring == 'yearly':
+                        current_date = current_date.replace(year=current_date.year + 1)
+                    
+                    # Break if no end date is set and we've created the first entry
+                    if not end_date:
+                        break
+
+            else:
+                # Create single income entry
+                UserIncome.objects.create(
+                    owner=request.user,
+                    amount=amount,
+                    date=start_date,
+                    source=source,
+                    description=description,
+                    is_recurring='none'
+                )
+
             messages.success(request, 'Income saved successfully')
-
             return redirect('income')
+
         except ValueError:
             messages.error(request, 'Invalid date format')
             return render(request, 'income/add_income.html', context)
-            # return redirect('add-income', context)
-
-        # UserIncome.objects.create(owner=request.user, amount=amount, date=date,
-        #                           source=source, description=description)
-        # messages.success(request, 'Record saved successfully')
-
-        # return redirect('income')
 
 
 @login_required(login_url='/authentication/login')

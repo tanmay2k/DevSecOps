@@ -17,7 +17,7 @@ import logging
 
 client = OpenAI(
 	base_url="https://api-inference.huggingface.co/v1/",
-    api_key="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",
+    api_key="",
 )
 def generate_ai_recommendations(user):
     # Fetch user data

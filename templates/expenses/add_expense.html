@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 py-8 bg-cover bg-center bg-no-repeat" style="background-image: url('{% static 'img/login.jpeg' %}');">
+<div class="min-h-screen bg-gray-50 py-8 bg-cover bg-center bg-no-repeat" style="background-image: url('{% static "img/login.jpeg" %}');">
     <div class="max-w-2xl mx-auto px-4">
         <!-- Add a semi-transparent overlay to improve readability -->
         <div class="absolute inset-0 bg-black opacity-50"></div>
@@ -76,6 +76,20 @@
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                             placeholder="Category will be predicted..." required>
                         <input type="hidden" name="initial_predicted_category" id="initial-predicted-category" value="{{predicted_category}}">
+                    </div>
+
+                    <!-- Spent By Field -->
+                    <div>
+                        <label for="spent_by" class="block mb-2 text-sm font-medium text-gray-900">Spent By *</label>
+                        <select name="spent_by" id="spent_by" 
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
+                            required>
+                            <option value="Self">Self</option>
+                            <option value="Dad">Dad</option>
+                            <option value="Mom">Mom</option>
+                            <option value="Sister">Sister</option>
+                            <option value="Brother">Brother</option>
+                        </select>
                     </div>
 
                     <!-- Date Field -->

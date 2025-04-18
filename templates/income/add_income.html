@@ -109,6 +109,36 @@
                         >
                     </div>
 
+                    <!-- Recurring Type -->
+                    <div>
+                        <label for="is_recurring" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Recurring Type
+                        </label>
+                        <select 
+                            id="is_recurring"
+                            name="is_recurring"
+                            class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-3 text-sm text-gray-900 dark:text-gray-100 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
+                        >
+                            <option value="none">None</option>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                    </div>
+
+                    <div id="end_date_container" style="display: none;">
+                        <label for="end_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            End Date (Optional)
+                        </label>
+                        <input 
+                            type="date"
+                            id="end_date"
+                            name="end_date"
+                            class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-3 text-sm text-gray-900 dark:text-gray-100 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
+                        >
+                    </div>
+
                     <!-- Submit Button -->
                     <div class="flex justify-end">
                         <button 
@@ -130,6 +160,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set default date to today
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('income_date').value = today;
+
+    const recurringSelect = document.getElementById('is_recurring');
+    const endDateContainer = document.getElementById('end_date_container');
+
+    recurringSelect.addEventListener('change', function() {
+        if (this.value === 'none') {
+            endDateContainer.style.display = 'none';
+        } else {
+            endDateContainer.style.display = 'block';
+        }
+    });
 });
 </script>
 {% endblock %}

@@ -14,6 +14,14 @@ class Expense(models.Model):
         ('YEARLY', 'Yearly'),
     ]
 
+    SPENT_BY_CHOICES = [
+        ('Self', 'Self'),
+        ('Dad', 'Dad'),
+        ('Mom', 'Mom'),
+        ('Sister', 'Sister'),
+        ('Brother', 'Brother'),
+    ]
+
     amount = models.FloatField()
     date = models.DateField(default=now)
     description = models.TextField()
@@ -21,12 +29,13 @@ class Expense(models.Model):
     category = models.CharField(max_length=266)
     is_recurring = models.CharField(max_length=10, choices=RECURRING_CHOICES, default='NO')
     recurring_end_date = models.DateField(null=True, blank=True)
+    spent_by = models.CharField(max_length=10, choices=SPENT_BY_CHOICES, default='Self')  # New field
 
     def __str__(self):
         return self.category
 
     class Meta:
-        ordering: ['-date']
+        ordering = ['-date']
 
 
 class Category(models.Model):

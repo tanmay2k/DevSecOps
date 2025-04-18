@@ -12,7 +12,7 @@ from django.template.loader import render_to_string
 
 client = OpenAI(
 	base_url="https://api-inference.huggingface.co/v1/",
-    api_key="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",
+    api_key="",
 )
 
 # Function to get additional context
@@ -39,6 +39,7 @@ def generate_response(user_input, context):
                 f"User's Expenses: {context.get('expenses', [])}\n"
                 f"User's Goals: {context.get('goals', [])}\n"
                 f"User's Incomes: {context.get('incomes', [])}\n"
+                f" Answer any queries based on the given data precisely. feel free to use this data. remember to use INR as currency"
             ),
         },
         {"role": "user", "content": user_input},
@@ -65,14 +66,15 @@ def chatbot_view(request):
 
         if user_message:
             # Fetch context data
-            expenses = Expense.objects.filter(owner=request.user)
-            goals = Goal.objects.filter(owner=request.user)
-            incomes = UserIncome.objects.filter(owner=request.user)
+            expenses = Expense.objects.filter(owner=request.user).values("amount", "date", "description", "category")
+            goals = Goal.objects.filter(owner=request.user).values("name", "amount_to_save", "current_saved_amount", "end_date")
+            incomes = UserIncome.objects.filter(owner=request.user).values("amount", "date", "source", "description")
 
+            # Format context data as lists of dictionaries
             context = {
-                'expenses': expenses,
-                'goals': goals,
-                'incomes': incomes,
+                'expenses': list(expenses),
+                'goals': list(goals),
+                'incomes': list(incomes),
             }
 
             # Generate the assistant's response
