@@ -29,6 +29,25 @@
                     Next 30 Days
                 </span>
             </h1>
+            {% if model_accuracy >= 50 %}
+            <div class="mt-3 inline-flex items-center bg-green-100 dark:bg-green-900 rounded-full px-4 py-1">
+                <span class="text-green-800 dark:text-green-200 font-medium">
+                    <i class="fas fa-check-circle mr-2"></i>High Confidence Forecast
+                </span>
+            </div>
+            {% elif model_accuracy >= 20 %}
+            <div class="mt-3 inline-flex items-center bg-yellow-100 dark:bg-yellow-900 rounded-full px-4 py-1">
+                <span class="text-yellow-800 dark:text-yellow-200 font-medium">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>Medium Confidence Forecast
+                </span>
+            </div>
+            {% else %}
+            <div class="mt-3 inline-flex items-center bg-red-100 dark:bg-red-900 rounded-full px-4 py-1">
+                <span class="text-red-800 dark:text-red-200 font-medium">
+                    <i class="fas fa-exclamation-circle mr-2"></i>Low Confidence Forecast
+                </span>
+            </div>
+            {% endif %}
         </div>
 
         <!-- Stats Overview -->
@@ -41,6 +60,36 @@
                     <div class="text-center sm:text-left sm:ml-6">
                         <h2 class="text-xl font-bold text-gray-700 dark:text-gray-100">Total Predicted Expense</h2>
                         <p class="text-4xl font-bold text-purple-600 dark:text-purple-400">{{total_forecasted_expenses}}</p>
+                    </div>
+                    <div class="ml-auto mt-4 sm:mt-0 bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                        <div class="text-center">
+                            <h3 class="text-sm uppercase font-semibold text-gray-500 dark:text-gray-300">Model Details</h3>
+                            <div class="mt-2 grid grid-cols-2 gap-3">
+                                <div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Model Type</p>
+                                    <p class="text-sm font-medium text-gray-800 dark:text-gray-200">
+                                        {{ model_name|default:"ARIMA" }}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Forecast Accuracy</p>
+                                    <p class="text-sm font-medium 
+                                        {% if model_accuracy >= 50 %}text-green-600 dark:text-green-400
+                                        {% elif model_accuracy >= 20 %}text-yellow-600 dark:text-yellow-400
+                                        {% else %}text-red-600 dark:text-red-400{% endif %}">
+                                        {{ model_accuracy }}%
+                                    </p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Mean Abs. Error</p>
+                                    <p class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ mean_absolute_error }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">MAPE</p>
+                                    <p class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ mape }}%</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -118,14 +167,59 @@
                     </span>
                     Expense Trend Visualization
                 </h2>
+                {% if model_name == 'prophet' %}
+                <p class="text-sm text-gray-600 dark:text-gray-300">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    This visualization includes daily, weekly, and yearly patterns identified in your expenses.
+                </p>
+                {% endif %}
             </div>
             <div class="p-6">
                 <div class="relative rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-900 p-4">
-                    <img 
-                        src="{% static 'img/forecast_plot.png' %}" 
-                        alt="Expense Forecast Plot" 
-                        class="w-full h-auto rounded-lg shadow-md"
-                    >
+                    {{plot_div|safe}}
+                </div>
+            </div>
+        </div>
+
+        <!-- Tips to Improve Forecast Accuracy -->
+        <div class="mt-8 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden border border-gray-200 dark:border-purple-800 transition-all">
+            <div class="p-5 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-purple-800">
+                <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-2 flex items-center">
+                    <span class="mr-3 text-blue-600 dark:text-blue-400">
+                        <i class="fas fa-lightbulb"></i>
+                    </span>
+                    Tips to Improve Forecast Accuracy
+                </h2>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0 flex items-center justify-center w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full mr-3">
+                            <span class="text-blue-600 dark:text-blue-300 font-semibold">1</span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 dark:text-gray-200">Add More Expense Data</h3>
+                            <p class="text-gray-600 dark:text-gray-400">The more consistent expense data you record, the more accurate the forecast will be.</p>
+                        </div>
+                    </div>
+                    <div class="flex">
+                        <div class="flex-shrink-0 flex items-center justify-center w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full mr-3">
+                            <span class="text-blue-600 dark:text-blue-300 font-semibold">2</span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 dark:text-gray-200">Be Consistent with Categories</h3>
+                            <p class="text-gray-600 dark:text-gray-400">Using consistent categories helps the model recognize patterns in your spending.</p>
+                        </div>
+                    </div>
+                    <div class="flex">
+                        <div class="flex-shrink-0 flex items-center justify-center w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full mr-3">
+                            <span class="text-blue-600 dark:text-blue-300 font-semibold">3</span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 dark:text-gray-200">Record Regular Expenses</h3>
+                            <p class="text-gray-600 dark:text-gray-400">Including regular payments (rent, subscriptions) helps the model identify your spending patterns.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
