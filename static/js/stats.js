@@ -1,65 +1,127 @@
-const renderChart = (data, labels) => {
-  var ctx = document.getElementById("myChart").getContext("2d");
-  var myChart = new Chart(ctx, {
-    type: "doughnut",
-    data: {
-      labels: labels,
-      datasets: [
-        {
-          label: "Last 6 months expenses",
-          data: data,
-          backgroundColor: [
-            "rgba(255, 99, 132, 0.2)",
-            "rgba(54, 162, 235, 0.2)",
-            "rgba(255, 206, 86, 0.2)",
-            "rgba(75, 192, 192, 0.2)",
-            "rgba(153, 102, 255, 0.2)",
-            "rgba(255, 159, 64, 0.2)",
-            "rgba(155, 201, 22, 0.2)",
-            "rgba(203, 44, 255, 0.2)",
-            "rgba(135, 55, 103, 0.2)",
-            "rgba(100, 234, 99, 0.2)",
-            "rgba(200, 231, 209, 0.2)",
-            "rgba(98, 200, 201, 0.2)",
-            "rgba(255, 205, 65, 0.2)",
-            "rgba(55, 66, 77, 0.2)",
-            "rgba(199, 166, 277, 0.2)",
-          ],
-          borderColor: [
-            "rgba(255, 99, 132, 1)",
-            "rgba(54, 162, 235, 1)",
-            "rgba(255, 206, 86, 1)",
-            "rgba(75, 192, 192, 1)",
-            "rgba(153, 102, 255, 1)",
-            "rgba(255, 159, 64, 1)",
-          ],
-          borderWidth: 1,
+const renderCharts = (categoryData, categoryLabels, spentByData, spentByLabels) => {
+  // Wait for next tick to ensure DOM is ready
+  setTimeout(() => {
+    try {
+      // Destroy existing charts if they exist
+      const existingCategoryChart = Chart.getChart('categoryChart');
+      if (existingCategoryChart) {
+        existingCategoryChart.destroy();
+      }
+      
+      const existingSpentByChart = Chart.getChart('spentByChart');
+      if (existingSpentByChart) {
+        existingSpentByChart.destroy();
+      }
+
+      // Category Chart
+      const categoryCtx = document.getElementById('categoryChart');
+      if (!categoryCtx) {
+        console.error('Category chart canvas not found');
+        return;
+      }
+
+      new Chart(categoryCtx, {
+        type: 'doughnut',
+        data: {
+          labels: categoryLabels,
+          datasets: [{
+            data: categoryData,
+            backgroundColor: [
+              '#FF6384',
+              '#36A2EB',
+              '#FFCE56',
+              '#4BC0C0',
+              '#9966FF',
+              '#FF9F40'
+            ],
+            hoverOffset: 4
+          }]
         },
-      ],
-    },
-    options: {
-      title: {
-        display: true,
-        text: "Expenses per category",
-      },
-    },
-  });
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right',
+            },
+            title: {
+              display: true,
+              text: 'Expenses by Category'
+            }
+          }
+        }
+      });
+
+      // Spent By Chart
+      const spentByCtx = document.getElementById('spentByChart');
+      if (!spentByCtx) {
+        console.error('Spent by chart canvas not found');
+        return;
+      }
+
+      new Chart(spentByCtx, {
+        type: 'doughnut',
+        data: {
+          labels: spentByLabels,
+          datasets: [{
+            data: spentByData,
+            backgroundColor: [
+              '#FF9F40',
+              '#4BC0C0',
+              '#FFCE56',
+              '#36A2EB',
+              '#FF6384'
+            ],
+            hoverOffset: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right',
+            },
+            title: {
+              display: true,
+              text: 'Expenses by Spender'
+            }
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error rendering charts:', error);
+    }
+  }, 0);
 };
 
-const getChartData = () => {
-  console.log("fetching");
+// Wait for DOM to be fully loaded
+document.addEventListener('DOMContentLoaded', () => {
+  console.log("Fetching chart data...");
   fetch("/expense_category_summary")
     .then((res) => res.json())
     .then((results) => {
-      console.log("results", results);
+      console.log("Chart data received:", results);
       const category_data = results.expense_category_data;
-      const [labels, data] = [
+      const spent_by_data = results.expense_spent_by_data;
+      
+      if (!category_data || !spent_by_data) {
+        throw new Error('Invalid data received from server');
+      }
+
+      const [categoryLabels, categoryValues] = [
         Object.keys(category_data),
-        Object.values(category_data),
+        Object.values(category_data)
+      ];
+      
+      const [spentByLabels, spentByValues] = [
+        Object.keys(spent_by_data),
+        Object.values(spent_by_data)
       ];
 
-      renderChart(data, labels);
+      renderCharts(categoryValues, categoryLabels, spentByValues, spentByLabels);
+    })
+    .catch(error => {
+      console.error("Error fetching chart data:", error);
     });
-};
-
-document.onload = getChartData();
+});

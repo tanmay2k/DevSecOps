@@ -243,24 +243,41 @@ def expense_category_summary(request):
     expenses = Expense.objects.filter(owner=request.user,
                                       date__gte=six_months_ago, date__lte=todays_date)
     finalrep = {}
+    spent_by_rep = {}
 
     def get_category(expense):
         return expense.category
+    
+    def get_spent_by(expense):
+        return expense.spent_by
+
     category_list = list(set(map(get_category, expenses)))
+    spent_by_list = list(set(map(get_spent_by, expenses)))
 
     def get_expense_category_amount(category):
         amount = 0
         filtered_by_category = expenses.filter(category=category)
-
         for item in filtered_by_category:
             amount += item.amount
         return amount
 
-    for x in expenses:
-        for y in category_list:
-            finalrep[y] = get_expense_category_amount(y)
+    def get_expense_spent_by_amount(spent_by):
+        amount = 0
+        filtered_by_spent = expenses.filter(spent_by=spent_by)
+        for item in filtered_by_spent:
+            amount += item.amount
+        return amount
 
-    return JsonResponse({'expense_category_data': finalrep}, safe=False)
+    for y in category_list:
+        finalrep[y] = get_expense_category_amount(y)
+    
+    for y in spent_by_list:
+        spent_by_rep[y] = get_expense_spent_by_amount(y)
+
+    return JsonResponse({
+        'expense_category_data': finalrep,
+        'expense_spent_by_data': spent_by_rep
+    }, safe=False)
 
 @login_required(login_url='/authentication/login')
 def stats_view(request):
