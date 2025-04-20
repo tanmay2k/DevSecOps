@@ -72,10 +72,15 @@
                     <!-- Category Field -->
                     <div>
                         <label for="category" class="block mb-2 text-sm font-medium text-gray-900">Category *</label>
-                        <input type="text" name="category" id="category-input" value="{{values.category}}"
+                        <select name="category" id="category-input"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                            placeholder="Category will be predicted..." required>
-                        <input type="hidden" name="initial_predicted_category" id="initial-predicted-category" value="{{predicted_category}}">
+                            required>
+                            {% for category in categories %}
+                            <option value="{{category.name}}" {% if category.name == values.category %}selected{% endif %}>
+                                {{category.name}}
+                            </option>
+                            {% endfor %}
+                        </select>
                     </div>
 
                     <!-- Spent By Field -->
@@ -84,11 +89,11 @@
                         <select name="spent_by" id="spent_by" 
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
                             required>
-                            <option value="Self">Self</option>
-                            <option value="Dad">Dad</option>
-                            <option value="Mom">Mom</option>
-                            <option value="Sister">Sister</option>
-                            <option value="Brother">Brother</option>
+                            {% for value, label in spent_by_choices %}
+                            <option value="{{ value }}" {% if value == values.spent_by %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
                         </select>
                     </div>
 

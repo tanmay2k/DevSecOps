@@ -116,6 +116,21 @@
                 </div>
             </div>
 
+            <!-- Account Type Field -->
+            <div>
+                <label class="block mb-2 text-sm font-medium text-gray-100">Account Type</label>
+                <div class="space-y-2">
+                    {% for radio in account_form.account_type %}
+                    <div class="flex items-center">
+                        {{ radio.tag }}
+                        <label for="{{ radio.id_for_label }}" class="ml-2 text-sm font-medium text-gray-100">
+                            {{ radio.choice_label }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
             <!-- Submit Button -->
             <button
                 type="submit"

@@ -32,26 +32,59 @@ from .models import UserIncome
 from django.db.models import Sum
 from django.db.models.functions import ExtractMonth
 from datetime import datetime
+from django.db.models import Q
 # Create your views here.
 
 @login_required(login_url='/authentication/login')
-
 def search_income(request):
     if request.method == 'POST':
         search_str = json.loads(request.body).get('searchText')
         income = UserIncome.objects.filter(
-            amount__istartswith=search_str, owner=request.user) | UserIncome.objects.filter(
-            date__istartswith=search_str, owner=request.user) | UserIncome.objects.filter(
-            description__icontains=search_str, owner=request.user) | UserIncome.objects.filter(
-            source__icontains=search_str, owner=request.user)
-        data = income.values()
-        return JsonResponse(list(data), safe=False)
+            Q(amount__istartswith=search_str, owner=request.user) |
+            Q(date__istartswith=search_str, owner=request.user) |
+            Q(description__icontains=search_str, owner=request.user) |
+            Q(source__icontains=search_str, owner=request.user)
+        )
+        data = []
+        for inc in income:
+            try:
+                owner_user = inc.owner
+                owner_display = owner_user.get_full_name() or owner_user.username
+                if owner_user == request.user:
+                    owner_display += " (Self)"
+                elif hasattr(owner_user, 'profile'):
+                    owner_display += f" ({owner_user.profile.relationship})"
+            except:
+                owner_display = inc.owner.username
+
+            data.append({
+                'amount': inc.amount,
+                'source': inc.source,
+                'description': inc.description,
+                'date': inc.date,
+                'id': inc.id,
+                'owner_display': owner_display
+            })
+        return JsonResponse(data, safe=False)
 
 
 @login_required(login_url='/authentication/login')
 def index(request):
     categories = Source.objects.filter(owner=request.user)
     income = UserIncome.objects.filter(owner=request.user)
+
+    # Add owner display name
+    for inc in income:
+        try:
+            owner_user = inc.owner
+            owner_display = owner_user.get_full_name() or owner_user.username
+            if owner_user == request.user:
+                owner_display += " (Self)"
+            elif hasattr(owner_user, 'profile'):
+                owner_display += f" ({owner_user.profile.relationship})"
+            inc.owner_display = owner_display
+        except:
+            inc.owner_display = inc.owner.username
 
     sort_order = request.GET.get('sort')
 

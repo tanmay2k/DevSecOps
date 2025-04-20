@@ -83,6 +83,7 @@
                                     <a href="?sort=date_desc" class="px-1 hover:text-blue-600 dark:hover:text-blue-500">↓</a>
                                 </div>
                             </th>
+                            <th scope="col" class="px-6 py-3">Added By</th>
                             <th scope="col" class="px-6 py-3">Actions</th>
                         </tr>
                     </thead>
@@ -93,6 +94,7 @@
                             <td class="px-6 py-4">{{income.source}}</td>
                             <td class="px-6 py-4">{{income.description}}</td>
                             <td class="px-6 py-4">{{income.date}}</td>
+                            <td class="px-6 py-4">{{income.owner_display}}</td>
                             <td class="px-6 py-4">
                                 <a href="{% url 'income-edit' income.id %}" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a>
                             </td>
@@ -105,7 +107,7 @@
             <p class="no-results mt-4 text-gray-700 dark:text-gray-300" style="display: none;">No results found</p>
 
             <!-- Search Results Table -->
-            <div class="table-output relative overflow-x-auto shadow-md sm:rounded-lg" style="display: none;">
+            <div class="relative overflow-x-auto sm:rounded-lg table-output" style="display: none;">
                 <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                         <tr>
@@ -113,12 +115,17 @@
                             <th scope="col" class="px-6 py-3">Source</th>
                             <th scope="col" class="px-6 py-3">Description</th>
                             <th scope="col" class="px-6 py-3">Date</th>
+                            <th scope="col" class="px-6 py-3">Added By</th>
                             <th scope="col" class="px-6 py-3">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="table-body">
                     </tbody>
                 </table>
+            </div>
+
+            <div class="no-results" style="display: none;">
+                <p class="text-center text-gray-500 dark:text-gray-400 mt-4">No results found</p>
             </div>
 
             <!-- Pagination -->

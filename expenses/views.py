@@ -9,6 +9,7 @@ from django.core.paginator import Paginator
 import json
 from django.http import JsonResponse
 from userpreferences.models import UserPreference
+from userprofile.models import Profile
 import requests
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -57,42 +58,62 @@ def search_expenses(request):
             date__istartswith=search_str, owner=request.user) | Expense.objects.filter(
             description__icontains=search_str, owner=request.user) | Expense.objects.filter(
             category__icontains=search_str, owner=request.user)
-        data = expenses.values()
-        return JsonResponse(list(data), safe=False)
+        
+        data = []
+        for expense in expenses:
+            # Get the user object for the spent_by username
+            try:
+                spent_by_user = User.objects.get(username=expense.spent_by)
+                spent_by_display = spent_by_user.get_full_name() or spent_by_user.username
+                if spent_by_user == request.user:
+                    spent_by_display += " (Self)"
+                elif hasattr(spent_by_user, 'profile'):
+                    spent_by_display += f" ({spent_by_user.profile.relationship})"
+            except User.DoesNotExist:
+                spent_by_display = expense.spent_by
 
+            data.append({
+                'amount': expense.amount,
+                'category': expense.category,
+                'description': expense.description,
+                'date': expense.date,
+                'id': expense.id,
+                'spent_by': spent_by_display
+            })
+        
+        return JsonResponse(data, safe=False)
 
 @login_required(login_url='/authentication/login')
 def index(request):
-    categories = Category.objects.all()
-    expenses = Expense.objects.filter(owner=request.user)
-
-    sort_order = request.GET.get('sort')
-
-    if sort_order == 'amount_asc':
-        expenses = expenses.order_by('amount')
-    elif sort_order == 'amount_desc':
-        expenses = expenses.order_by('-amount')
-    elif sort_order == 'date_asc':
-        expenses = expenses.order_by('date')
-    elif sort_order == 'date_desc':
-        expenses = expenses.order_by('-date')
+    expenses = Expense.get_user_viewable_expenses(request.user)
+    
+    # Enhance expenses with spent_by display names
+    for expense in expenses:
+        try:
+            spent_by_user = User.objects.get(username=expense.spent_by)
+            spent_by_display = spent_by_user.get_full_name() or spent_by_user.username
+            if spent_by_user == request.user:
+                spent_by_display += " (Self)"
+            elif hasattr(spent_by_user, 'profile'):
+                spent_by_display += f" ({spent_by_user.profile.relationship})"
+            expense.spent_by_display = spent_by_display
+        except User.DoesNotExist:
+            expense.spent_by_display = expense.spent_by
 
     paginator = Paginator(expenses, 5)
     page_number = request.GET.get('page')
-    page_obj = Paginator.get_page(paginator, page_number)
+    page_obj = paginator.get_page(page_number)
+    
     try:
-        currency = UserPreference.objects.get(user=request.user).currency
-    except:
-        currency=None
+        user_preferences = UserPreference.objects.get(user=request.user)
+        currency = user_preferences.currency
+    except UserPreference.DoesNotExist:
+        currency = "INR - Indian Rupee"
 
-    total = page_obj.paginator.num_pages
     context = {
         'expenses': expenses,
         'page_obj': page_obj,
         'currency': currency,
-        'total': total,
-        'sort_order': sort_order,
-
     }
     return render(request, 'expenses/index.html', context)
 
@@ -118,95 +139,77 @@ def get_expense_of_day(user):
 @login_required(login_url='/authentication/login')
 def add_expense(request):
     categories = Category.objects.all()
+    spent_by_choices = Expense.get_spent_by_choices(request.user)
+    
     context = {
         'categories': categories,
-        'values': request.POST
+        'values': request.POST,
+        'spent_by_choices': spent_by_choices
     }
-    
+
+    if request.method == 'GET':
+        return render(request, 'expenses/add_expense.html', context)
+
     if request.method == 'POST':
-        amount = request.POST.get('amount', '')
-        description = request.POST.get('description', '')
-        category = request.POST.get('category', '')
-        date_str = request.POST.get('expense_date', '')
-        is_recurring = request.POST.get('is_recurring', 'NO')
-        recurring_end_date = request.POST.get('recurring_end_date')
-        spent_by = request.POST.get('spent_by', 'Self')  # New field
+        amount = request.POST['amount']
+        description = request.POST['description']
+        category = request.POST['category']
+        date = request.POST.get('expense_date', timezone.now)
+        spent_by = request.POST.get('spent_by', 'Self')
 
-        if not all([amount, description, category, date_str, spent_by]):
-            messages.error(request, 'All fields are required')
+        if not amount:
+            messages.error(request, 'Amount is required')
             return render(request, 'expenses/add_expense.html', context)
 
-        try:
-            # Convert date string to date object
-            expense_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-            today = date.today()
-
-            if expense_date > today:
-                messages.error(request, 'Date cannot be in the future')
-                return render(request, 'expenses/add_expense.html', context)
-
-            # Check expense limit
-            user = request.user
-            expense_limit = ExpenseLimit.objects.filter(owner=user).first()
-            
-            if expense_limit:
-                daily_total = get_expense_of_day(user) + float(amount)
-                if daily_total > expense_limit.daily_expense_limit:
-                    send_limit_notification(user, daily_total)
-                    messages.warning(request, 'Daily expense limit exceeded!')
-
-            # Create expense
-            Expense.objects.create(
-                owner=request.user,
-                amount=amount,
-                date=expense_date,
-                category=category,
-                description=description,
-                is_recurring=is_recurring,
-                recurring_end_date=datetime.strptime(recurring_end_date, '%Y-%m-%d').date() if recurring_end_date else None,
-                spent_by=spent_by  # Save the new field
-            )
-
-            messages.success(request, 'Expense saved successfully')
-            return redirect('expenses')
-
-        except ValueError as e:
-            messages.error(request, f'Invalid date format: {str(e)}')
-            return render(request, 'expenses/add_expense.html', context)
-        except Exception as e:
-            messages.error(request, f'Error saving expense: {str(e)}')
+        if not description:
+            messages.error(request, 'Description is required')
             return render(request, 'expenses/add_expense.html', context)
 
-    return render(request, 'expenses/add_expense.html', context)
+        # Create expense with dynamic spent_by value
+        expense = Expense.objects.create(
+            amount=amount,
+            date=date,
+            category=category,
+            description=description,
+            owner=request.user,
+            spent_by=spent_by
+        )
+        
+        messages.success(request, 'Expense saved successfully')
+        return redirect('expenses')
 
 @login_required(login_url='/authentication/login')
 def expense_edit(request, id):
     expense = Expense.objects.get(pk=id)
     categories = Category.objects.all()
+    spent_by_choices = Expense.get_spent_by_choices(request.user)
+    
     context = {
         'expense': expense,
         'values': expense,
-        'categories': categories
+        'categories': categories,
+        'spent_by_choices': spent_by_choices
     }
+
     if request.method == 'GET':
         return render(request, 'expenses/edit-expense.html', context)
+
     if request.method == 'POST':
         amount = request.POST['amount']
+        description = request.POST['description']
+        category = request.POST['category']
         date_str = request.POST.get('expense_date')
-        spent_by = request.POST.get('spent_by', 'Self')  # New field
+        spent_by = request.POST.get('spent_by', 'Self')
 
         if not amount:
             messages.error(request, 'Amount is required')
             return render(request, 'expenses/edit-expense.html', context)
-        description = request.POST['description']
-        category = request.POST['category']
 
         if not description:
-            messages.error(request, 'description is required')
+            messages.error(request, 'Description is required')
             return render(request, 'expenses/edit-expense.html', context)
 
         try:
-            # Use datetime directly, not datetime.datetime
             expense_date = datetime.strptime(date_str, '%Y-%m-%d').date()
             today = date.today()
 
@@ -219,11 +222,10 @@ def expense_edit(request, id):
             expense.date = expense_date
             expense.category = category
             expense.description = description
-            expense.spent_by = spent_by  # Update the new field
+            expense.spent_by = spent_by
 
             expense.save()
             messages.success(request, 'Expense updated successfully')
-
             return redirect('expenses')
         except ValueError as e:
             messages.error(request, f'Invalid date format: {str(e)}')
