@@ -15,7 +15,6 @@ pipeline {
             }
         }
 
-
         stage('Build Docker Image') {
             steps {
                 script {
@@ -43,11 +42,6 @@ pipeline {
         }
 
         stage('Push to Registry') {
-            when {
-                expression {
-                    return true // Push is enabled
-                }
-            }
             steps {
                 sh '''
                 docker tag $IMAGE_NAME tlad1/expensetracker:latest
@@ -67,10 +61,10 @@ pipeline {
         stage('Deploy to Minikube') {
             steps {
                 sh '''
-                kubectl apply -f expensetracker-deployment.yaml -n $NAMESPACE
-                kubectl apply -f expensetracker-service.yaml -n $NAMESPACE
-                kubectl apply -f postgres-deployment.yaml -n $NAMESPACE
-                kubectl apply -f postgres-service.yaml -n $NAMESPACE
+                kubectl apply -f Kubernetes/expensetracker-deployment.yaml -n $NAMESPACE
+                kubectl apply -f Kubernetes/expensetracker-service.yaml -n $NAMESPACE
+                kubectl apply -f Kubernetes/postgres-deployment.yaml -n $NAMESPACE
+                kubectl apply -f Kubernetes/postgres-service.yaml -n $NAMESPACE
                 '''
             }
         }
@@ -82,4 +76,3 @@ pipeline {
         }
     }
 }
-
