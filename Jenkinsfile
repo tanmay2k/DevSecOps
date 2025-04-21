@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         IMAGE_NAME = "expensetracker"
-        SONARQUBE_SERVER = "SonarQube" // must match Jenkins config name
+        SONARQUBE_SERVER = "SonarQube" 
         TRIVY_IGNORE_UNFIXED = "true"
         NAMESPACE = "expensetracker"
     }
@@ -11,7 +11,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/tanmay2k/DevSecOps/' // replace if needed
+                git 'https://github.com/tanmay2k/DevSecOps/' 
             }
         }
 
@@ -26,7 +26,9 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONARQUBE_SERVER}") {
-                    sh "sonar-scanner"
+                    withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
+                        sh "sonar-scanner -Dsonar.login=${SONAR_TOKEN}"
+                    }
                 }
             }
         }
@@ -42,7 +44,7 @@ pipeline {
         stage('Push to Registry') {
             when {
                 expression {
-                    return true // Set to true if you're pushing to Docker Hub or private registry
+                    return true // Push is enabled
                 }
             }
             steps {
@@ -56,7 +58,7 @@ pipeline {
         stage('Create Namespace') {
             steps {
                 sh '''
-                kubectl get namespace expensetracker || kubectl create namespace expensetracker
+                kubectl get namespace $NAMESPACE || kubectl create namespace $NAMESPACE
                 '''
             }
         }
@@ -64,10 +66,10 @@ pipeline {
         stage('Deploy to Minikube') {
             steps {
                 sh '''
-                kubectl apply -f expensetracker-deployment.yaml -n expensetracker
-                kubectl apply -f expensetracker-service.yaml -n expensetracker
-                kubectl apply -f postgres-deployment.yaml -n expensetracker
-                kubectl apply -f postgres-service.yaml -n expensetracker
+                kubectl apply -f expensetracker-deployment.yaml -n $NAMESPACE
+                kubectl apply -f expensetracker-service.yaml -n $NAMESPACE
+                kubectl apply -f postgres-deployment.yaml -n $NAMESPACE
+                kubectl apply -f postgres-service.yaml -n $NAMESPACE
                 '''
             }
         }
@@ -75,7 +77,8 @@ pipeline {
 
     post {
         always {
-            echo 'Pipeline finished, regardless of success or you fucking it up.'
+            echo 'Pipeline finished.'
         }
     }
 }
+
