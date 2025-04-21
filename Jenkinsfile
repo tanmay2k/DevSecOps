@@ -11,9 +11,10 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/tanmay2k/DevSecOps.git' 
+                git branch: 'main', url: 'https://github.com/tanmay2k/DevSecOps.git'
             }
         }
+
 
         stage('Build Docker Image') {
             steps {
