@@ -43,10 +43,14 @@ pipeline {
 
         stage('Push to Registry') {
             steps {
-                sh '''
-                docker tag $IMAGE_NAME tlad1/expensetracker:latest
-                docker push tlad1/expensetracker:latest
-                '''
+                timeout(time: 10, unit: 'MINUTES') {
+                    retry(3) {
+                        sh '''
+                        docker tag $IMAGE_NAME tlad1/expensetracker:latest
+                        docker push tlad1/expensetracker:latest
+                        '''
+                    }
+                }
             }
         }
 
