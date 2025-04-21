@@ -11,7 +11,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/tanmay2k/DevSecOps/' 
+                git 'https://github.com/tanmay2k/DevSecOps.git' 
             }
         }
 
