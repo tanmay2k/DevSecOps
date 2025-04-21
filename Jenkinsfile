@@ -5,6 +5,7 @@ pipeline {
         IMAGE_NAME = "expensetracker"
         SONARQUBE_SERVER = "SonarQube" // must match Jenkins config name
         TRIVY_IGNORE_UNFIXED = "true"
+        NAMESPACE = "expensetracker"
     }
 
     stages {
@@ -52,14 +53,21 @@ pipeline {
             }
         }
 
+        stage('Create Namespace') {
+            steps {
+                sh '''
+                kubectl get namespace expensetracker || kubectl create namespace expensetracker
+                '''
+            }
+        }
+
         stage('Deploy to Minikube') {
             steps {
                 sh '''
-                kubectl apply -f expensetracker-deployment.yaml
-                kubectl apply -f expensetracker-service.yaml
-                kubectl apply -f postgres-deployment.yaml
-                kubectl apply -f postgres-service.yaml
-                
+                kubectl apply -f expensetracker-deployment.yaml -n expensetracker
+                kubectl apply -f expensetracker-service.yaml -n expensetracker
+                kubectl apply -f postgres-deployment.yaml -n expensetracker
+                kubectl apply -f postgres-service.yaml -n expensetracker
                 '''
             }
         }
