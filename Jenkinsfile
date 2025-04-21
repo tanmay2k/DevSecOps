@@ -45,10 +45,13 @@ pipeline {
             steps {
                 timeout(time: 10, unit: 'MINUTES') {
                     retry(3) {
-                        sh '''
-                        docker tag $IMAGE_NAME tlad1/expensetracker:latest
-                        docker push tlad1/expensetracker:latest
-                        '''
+                        withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
+                            sh '''
+                            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
+                            docker tag $IMAGE_NAME tlad1/expensetracker:latest
+                            docker push tlad1/expensetracker:latest
+                            '''
+                        }
                     }
                 }
             }
