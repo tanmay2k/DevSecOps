@@ -8,10 +8,12 @@ services:
     environment:
       - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
     volumes:
-      - sonarqube_data:/opt/sonarqube/data
-      - sonarqube_logs:/opt/sonarqube/logs
+      - devops-project_sonarqube_data:/opt/sonarqube/data
+      - devops-project_sonarqube_logs:/opt/sonarqube/logs
 
 volumes:
-  sonarqube_data:
-  sonarqube_logs:
+  devops-project_sonarqube_data:
+    external: true
+  devops-project_sonarqube_logs:
+    external: true
 
