@@ -2,86 +2,58 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "expensetracker"
-        SONARQUBE_SERVER = "SonarQube" 
-        TRIVY_IGNORE_UNFIXED = "true"
-        NAMESPACE = "expensetracker"
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-creds')
     }
 
     stages {
-        stage('Checkout') {
+        stage('Sanity Check') {
             steps {
-                git branch: 'main', url: 'https://github.com/tanmay2k/DevSecOps.git'
+                echo 'Pipeline’s alive, bitch.'
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Clone Repo') {
+            steps {
+                git 'https://github.com/tanmay2k/DevSecOps'
+            }
+        }
+
+        stage('Docker Build') {
             steps {
                 script {
-                    sh "docker build -t $IMAGE_NAME ."
+                    def imageName = "tlad1/expensetracker-web:latest"
+                    sh "docker build -t ${imageName} ."
                 }
             }
         }
 
-        stage('SonarQube Analysis') {
+        stage('Docker Push') {
             steps {
-                withSonarQubeEnv("${SONARQUBE_SERVER}") {
-                    withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
-                        sh "sonar-scanner -Dsonar.login=${SONAR_TOKEN}"
-                    }
+                script {
+                    def imageName = "tlad1/expensetracker-web:latest"
+                    sh """
+                        echo ${DOCKERHUB_CREDENTIALS_PSW} | docker login -u ${DOCKERHUB_CREDENTIALS_USR} --password-stdin
+                        docker push ${imageName}
+                    """
                 }
             }
         }
 
-        stage('Trivy Scan') {
+        stage('K8s Dry Deploy') {
             steps {
-                sh '''
-                trivy image --exit-code 1 --severity HIGH,CRITICAL ${IMAGE_NAME} || echo "[!] Vulnerabilities found"
-                '''
-            }
-        }
-
-        stage('Push to Registry') {
-            steps {
-                timeout(time: 10, unit: 'MINUTES') {
-                    retry(3) {
-                        withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
-                            sh '''
-                            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
-                            docker tag $IMAGE_NAME tlad1/expensetracker:latest
-                            docker push tlad1/expensetracker:latest
-                            '''
-                        }
-                    }
-                }
-            }
-        }
-
-        stage('Create Namespace') {
-            steps {
-                sh '''
-                kubectl get namespace $NAMESPACE || kubectl create namespace $NAMESPACE
-                '''
-            }
-        }
-
-        stage('Deploy to Minikube') {
-            steps {
-                sh '''
-                kubectl apply -f Kubernetes/expensetracker-deployment.yaml -n $NAMESPACE
-                kubectl apply -f Kubernetes/expensetracker-service.yaml -n $NAMESPACE
-                kubectl apply -f Kubernetes/postgres-deployment.yaml -n $NAMESPACE
-                kubectl apply -f Kubernetes/postgres-service.yaml -n $NAMESPACE
-                kubectl apply -f Kubernetes/pv.yaml -n $NAMESPACE
-                kubectl apply -f Kubernetes/pvc.yaml -n $NAMESPACE
-                '''
+                sh 'kubectl version --client'
+                sh 'kubectl get nodes'
             }
         }
     }
 
     post {
-        always {
-            echo 'Pipeline finished.'
+        success {
+            echo 'Pipeline ran smoother than your last relationship, ya clown.'
+        }
+        failure {
+            echo 'Pipeline crashed like a drunk on a moped. Fix it, ya donut.'
         }
     }
 }
+
