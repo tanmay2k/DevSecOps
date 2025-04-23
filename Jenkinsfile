@@ -72,6 +72,8 @@ pipeline {
                 kubectl apply -f Kubernetes/expensetracker-service.yaml -n $NAMESPACE
                 kubectl apply -f Kubernetes/postgres-deployment.yaml -n $NAMESPACE
                 kubectl apply -f Kubernetes/postgres-service.yaml -n $NAMESPACE
+                kubectl apply -f Kubernetes/pv.yaml -n $NAMESPACE
+                kubectl apply -f Kubernetes/pvc.yaml -n $NAMESPACE
                 '''
             }
         }
