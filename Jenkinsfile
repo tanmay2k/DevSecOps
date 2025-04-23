@@ -2,57 +2,94 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-creds')
+        IMAGE_NAME = "expensetracker"
+        SONARQUBE_SERVER = "SonarQube"
+        TRIVY_IGNORE_UNFIXED = "true"
+        NAMESPACE = "expensetracker"
     }
 
     stages {
-        stage('Sanity Check') {
+        stage('Checkout') {
             steps {
-                echo 'Pipeline’s alive, bitch.'
+                git branch: 'main', url: 'https://github.com/tanmay2k/DevSecOps.git'
             }
         }
 
-        stage('Clone Repo') {
-            steps {
-                git 'https://github.com/tanmay2k/DevSecOps'
-            }
-        }
-
-        stage('Docker Build') {
+        stage('Build Docker Image') {
             steps {
                 script {
-                    def imageName = "tlad1/expensetracker-web:latest"
-                    sh "docker build -t ${imageName} ."
+                    sh "docker build -t ${IMAGE_NAME} ."
                 }
             }
         }
 
-        stage('Docker Push') {
+        stage('SonarQube Analysis') {
             steps {
-                script {
-                    def imageName = "tlad1/expensetracker-web:latest"
-                    sh """
-                        echo ${DOCKERHUB_CREDENTIALS_PSW} | docker login -u ${DOCKERHUB_CREDENTIALS_USR} --password-stdin
-                        docker push ${imageName}
-                    """
+                withSonarQubeEnv("${SONARQUBE_SERVER}") {
+                    withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
+                        sh "sonar-scanner -Dsonar.login=${SONAR_TOKEN}"
+                    }
                 }
             }
         }
 
-        stage('K8s Dry Deploy') {
+        stage('Trivy Scan') {
             steps {
-                sh 'kubectl version --client'
-                sh 'kubectl get nodes'
+                script {
+                    sh '''
+                        trivy image --exit-code 1 --severity HIGH,CRITICAL ${IMAGE_NAME} || echo "[!] Vulnerabilities found"
+                    '''
+                }
+            }
+        }
+
+        stage('Push to Registry') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
+                    script {
+                        sh '''
+                            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
+                            docker tag ${IMAGE_NAME} tlad1/expensetracker:latest
+                            docker push tlad1/expensetracker:latest
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Create Namespace') {
+            steps {
+                script {
+                    sh '''
+                        kubectl get namespace ${NAMESPACE} || kubectl create namespace ${NAMESPACE}
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy to Minikube') {
+            steps {
+                script {
+                    sh '''
+                        kubectl apply -f Kubernetes/expensetracker-deployment.yaml -n ${NAMESPACE}
+                        kubectl apply -f Kubernetes/expensetracker-service.yaml -n ${NAMESPACE}
+                        kubectl apply -f Kubernetes/postgres-deployment.yaml -n ${NAMESPACE}
+                        kubectl apply -f Kubernetes/postgres-service.yaml -n ${NAMESPACE}
+                    '''
+                }
             }
         }
     }
 
     post {
-        success {
-            echo 'Pipeline ran smoother than your last relationship, ya clown.'
+        always {
+            echo 'Pipeline finished.'
         }
         failure {
-            echo 'Pipeline crashed like a drunk on a moped. Fix it, ya donut.'
+            echo 'Pipeline failed.'
+        }
+        success {
+            echo 'Build and deploy successful.'
         }
     }
 }
