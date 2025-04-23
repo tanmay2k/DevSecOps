@@ -27,6 +27,6 @@ urlpatterns = [
     path('api/', include('api.urls')),
     path('goals/',include('goals.urls')),
     path('account/',include('userprofile.urls')),
-    path('chatbot/',include('finassist.urls'))
+    path('chatbot/',include('finassist.urls')),
 
 ]
