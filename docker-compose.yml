@@ -1,5 +1,12 @@
 version: '3'
 
+volumes:
+  devops-project_sonarqube_data:
+    external: true
+  devops-project_sonarqube_logs:
+    external: true
+  postgres_data:
+
 services:
   sonarqube:
     image: sonarqube:latest
@@ -11,14 +18,7 @@ services:
       - devops-project_sonarqube_data:/opt/sonarqube/data
       - devops-project_sonarqube_logs:/opt/sonarqube/logs
 
-volumes:
-  devops-project_sonarqube_data:
-    external: true
-  devops-project_sonarqube_logs:
-    external: true
-version: '3.8'
 
-services:
   db:
     image: postgres:13
     environment:
@@ -50,5 +50,3 @@ networks:
   app-network:
     driver: bridge
 
-volumes:
-  postgres_data:

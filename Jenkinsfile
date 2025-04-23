@@ -76,9 +76,34 @@ pipeline {
                         kubectl apply -f Kubernetes/expensetracker-service.yaml -n ${NAMESPACE}
                         kubectl apply -f Kubernetes/postgres-deployment.yaml -n ${NAMESPACE}
                         kubectl apply -f Kubernetes/postgres-service.yaml -n ${NAMESPACE}
-			kubectl apply -f Kubernetes/pv.yaml
-			kubectl apply -f Kubernetes/pvc.yaml
+                        kubectl apply -f Kubernetes/pv.yaml
+                        kubectl apply -f Kubernetes/pvc.yaml
                     '''
+                }
+            }
+        }
+
+        stage('Patch Controller Manager Metrics') {
+            steps {
+                script {
+                    sh """
+                        echo '[+] Patching kube-controller-manager to expose metrics externally…'
+
+                        # find the kind control-plane container (adjust name grep if yours differs)
+                        CP=\$(docker ps --format '{{.Names}}' | grep control-plane)
+
+                        # sed-replace bind-address in the static pod manifest
+                        docker exec \$CP \
+                          sed -i 's/--bind-address=127.0.0.1/--bind-address=0.0.0.0/' \
+                          /etc/kubernetes/manifests/kube-controller-manager.yaml
+
+                        # give kubelet a sec to tear down & spin it back up
+                        sleep 10
+
+                        # sanity check
+                        echo '[+] Testing metrics endpoint…'
+                        docker exec \$CP curl -sk https://localhost:10257/metrics | head -n 5
+                    """
                 }
             }
         }
@@ -132,4 +157,3 @@ pipeline {
         }
     }
 }
-
