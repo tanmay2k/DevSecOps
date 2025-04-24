@@ -1,6 +1,5 @@
 pipeline {
     agent any
-
     environment {
         IMAGE_NAME = "expensetracker"
         SONARQUBE_SERVER = "SonarQube"
@@ -8,14 +7,12 @@ pipeline {
         NAMESPACE = "expensetracker"
         MONITORING_NAMESPACE = "monitoring"
     }
-
     stages {
         stage('Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/tanmay2k/DevSecOps.git'
             }
         }
-
         stage('Build Docker Image') {
             steps {
                 script {
@@ -23,7 +20,6 @@ pipeline {
                 }
             }
         }
-
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONARQUBE_SERVER}") {
@@ -33,7 +29,6 @@ pipeline {
                 }
             }
         }
-
         stage('Trivy Scan') {
             steps {
                 script {
@@ -43,7 +38,6 @@ pipeline {
                 }
             }
         }
-
         stage('Push to Registry') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
@@ -57,7 +51,6 @@ pipeline {
                 }
             }
         }
-
         stage('Create Namespace') {
             steps {
                 script {
@@ -67,7 +60,6 @@ pipeline {
                 }
             }
         }
-
         stage('Deploy to Kind Cluster') {
             steps {
                 script {
@@ -82,24 +74,23 @@ pipeline {
                 }
             }
         }
-
         stage('Patch Controller Manager Metrics') {
             steps {
                 script {
                     sh """
                         echo '[+] Patching kube-controller-manager to expose metrics externally…'
-
+ 
                         # find the kind control-plane container (adjust name grep if yours differs)
                         CP=\$(docker ps --format '{{.Names}}' | grep control-plane)
-
+ 
                         # sed-replace bind-address in the static pod manifest
                         docker exec \$CP \
                           sed -i 's/--bind-address=127.0.0.1/--bind-address=0.0.0.0/' \
                           /etc/kubernetes/manifests/kube-controller-manager.yaml
-
+ 
                         # give kubelet a sec to tear down & spin it back up
                         sleep 10
-
+ 
                         # sanity check
                         echo '[+] Testing metrics endpoint…'
                         docker exec \$CP curl -sk https://localhost:10257/metrics | head -n 5
@@ -107,16 +98,13 @@ pipeline {
                 }
             }
         }
-
         stage('Install Monitoring Stack') {
             steps {
                 script {
                     sh '''
                         kubectl get namespace ${MONITORING_NAMESPACE} || kubectl create namespace ${MONITORING_NAMESPACE}
-                        
                         helm repo add prometheus-community https://prometheus-community.github.io/helm-charts || true
                         helm repo update
-                        
                         if ! helm status prometheus -n ${MONITORING_NAMESPACE} > /dev/null 2>&1; then
                             echo "[+] Installing Prometheus stack..."
                             helm install prometheus prometheus-community/kube-prometheus-stack -n ${MONITORING_NAMESPACE}
@@ -127,24 +115,30 @@ pipeline {
                 }
             }
         }
-
         stage('Port Forward Monitoring') {
             steps {
                 script {
                     sh '''
-                        # Prometheus
+                        echo "[+] Starting port-forwarding for Prometheus and Grafana..."
+ 
+                        # Port-forward Prometheus
                         nohup kubectl port-forward svc/prometheus-kube-prometheus-prometheus -n ${MONITORING_NAMESPACE} 9090:9090 >/dev/null 2>&1 &
-
-                        # Grafana
+                        echo $! > prometheus_pf.pid
+ 
+                        # Port-forward Grafana
                         nohup kubectl port-forward svc/prometheus-grafana -n ${MONITORING_NAMESPACE} 3000:80 >/dev/null 2>&1 &
+                        echo $! > grafana_pf.pid
+ 
+                        sleep 5
                     '''
                     echo "[+] Prometheus available at http://localhost:9090"
                     echo "[+] Grafana available at http://localhost:3000"
                 }
             }
         }
+ 
     }
-
+ 
     post {
         always {
             echo 'Pipeline finished.'
