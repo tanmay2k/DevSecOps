@@ -1,95 +1,114 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<div class="container p-4 mx-auto max-w-4xl">
-    <!-- Breadcrumb and Delete Button -->
-    <div class="flex justify-between items-center mb-6">
-        <nav class="flex" aria-label="Breadcrumb">
-            <ol class="inline-flex items-center space-x-1 text-sm text-gray-500 dark:text-gray-400">
-                <li class="inline-flex items-center">
-                    <a href="{% url 'income' %}" class="inline-flex items-center hover:text-blue-600 dark:hover:text-blue-500">
-                        Income
-                    </a>
-                </li>
-                <li>
-                    <div class="flex items-center">
-                        <svg class="w-3 h-3 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
-                        </svg>
-                        <span class="ml-1" aria-current="page">Edit Income</span>
-                    </div>
-                </li>
-            </ol>
-        </nav>
-        
-        <a href="{% url 'income-delete' income.id %}" 
-           class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:ring-red-300 dark:focus:ring-red-900">
-            <svg class="w-4 h-4 mr-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 20">
-                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 5h16M7 8v8m4-8v8M7 1h4a1 1 0 0 1 1 1v3H6V2a1 1 0 0 1 1-1ZM3 5h12v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5Z"/>
-            </svg>
-            Delete
-        </a>
+<div class="min-h-screen py-8 relative">
+    <!-- Background with blur -->
+    <div class="fixed inset-0 z-0"
+         style="background-image: url('https://images.pexels.com/photos/53621/calculator-calculation-insurance-finance-53621.jpeg');
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+                filter: blur(8px);
+                transform: scale(1.1);">
     </div>
+    
+    <!-- Dark overlay -->
+    <div class="absolute inset-0 bg-black/60 z-10"></div>
 
-    <!-- Form Card -->
-    <div class="bg-white rounded-lg shadow dark:bg-gray-800">
-        <div class="p-6">
-            {% include 'partials/_messages.html' %}
+    <!-- Main Content -->
+    <div class="container p-4 mx-auto max-w-4xl relative z-20">
+        <!-- Breadcrumb and Delete Button -->
+        <div class="flex justify-between items-center mb-6">
+            <nav class="flex" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 text-sm text-gray-300">
+                    <li class="inline-flex items-center">
+                        <a href="{% url 'income' %}" class="inline-flex items-center hover:text-blue-400">
+                            Income
+                        </a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <svg class="w-3 h-3 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
+                            </svg>
+                            <span class="ml-1 text-gray-300" aria-current="page">Edit Income</span>
+                        </div>
+                    </li>
+                </ol>
+            </nav>
             
-            <form action="{% url 'income-edit' income.id %}" method="post" class="space-y-4">
-                {% csrf_token %}
+            <a href="{% url 'income-delete' income.id %}" 
+               class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-red-600/90 rounded-lg hover:bg-red-700 focus:ring-4 focus:ring-red-300 dark:focus:ring-red-900">
+                <svg class="w-4 h-4 mr-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 20">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 5h16M7 8v8m4-8v8M7 1h4a1 1 0 0 1 1 1v3H6V2a1 1 0 0 1 1-1ZM3 5h12v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5Z"/>
+                </svg>
+                Delete
+            </a>
+        </div>
+
+        <!-- Form Card -->
+        <div class="bg-white/95 backdrop-blur-sm rounded-lg shadow-xl dark:bg-gray-800/95">
+            <div class="p-6">
+                {% include 'partials/_messages.html' %}
                 
-                <!-- Amount Field -->
-                <div>
-                    <label for="amount" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Amount</label>
-                    <input type="text" 
-                           id="amount" 
-                           name="amount" 
-                           value="{{values.amount}}"
-                           class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                </div>
-
-                <!-- Description Field -->
-                <div>
-                    <label for="description" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Description</label>
-                    <input type="text" 
-                           id="description" 
-                           name="description" 
-                           value="{{values.description}}"
-                           class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                </div>
-
-                <!-- Source Field -->
-                <div>
-                    <label for="source" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Source</label>
-                    <select id="source" 
-                            name="source"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                        <option selected value="{{values.source}}">{{values.source}}</option>
-                        {% for source in sources %}
-                            <option value="{{source.name}}">{{source.name}}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <!-- Date Field -->
-                <div>
-                    <label for="income_date" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Date of Income</label>
+                <form action="{% url 'income-edit' income.id %}" method="post" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    <!-- Amount Field -->
                     <div class="relative">
-                        <input type="date" 
-                               id="income_date" 
-                               name="income_date"
-                               value="{{values.date | date:'Y-m-d' }}"
+                        <label for="amount" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Amount</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 dark:text-gray-400">₹</span>
+                            <input type="text" 
+                                   id="amount" 
+                                   name="amount" 
+                                   value="{{values.amount}}"
+                                   class="pl-8 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                        </div>
+                    </div>
+
+                    <!-- Description Field -->
+                    <div>
+                        <label for="description" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Description</label>
+                        <input type="text" 
+                               id="description" 
+                               name="description" 
+                               value="{{values.description}}"
                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                     </div>
-                </div>
 
-                <!-- Submit Button -->
-                <button type="submit" 
-                        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
-                    Save Changes
-                </button>
-            </form>
+                    <!-- Source Field -->
+                    <div>
+                        <label for="source" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Source</label>
+                        <select id="source" 
+                                name="source"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                            <option selected value="{{values.source}}">{{values.source}}</option>
+                            {% for source in sources %}
+                                <option value="{{source.name}}">{{source.name}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Date Field -->
+                    <div>
+                        <label for="income_date" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Date of Income</label>
+                        <div class="relative">
+                            <input type="date" 
+                                   id="income_date" 
+                                   name="income_date"
+                                   value="{{values.date | date:'Y-m-d' }}"
+                                   class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" 
+                            class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
+                        Save Changes
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 </div>

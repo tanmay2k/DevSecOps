@@ -23,96 +23,112 @@
 {% endblock link %}
 
 {% block content %}
-<div class="p-4 sm:ml-64">
-    <!-- Page Header -->
-    <div class="flex items-center justify-between mb-4">
-        <h1 class="text-2xl font-semibold dark:text-white">Dashboard</h1>
-        <a href="{% url 'report' %}" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
-            <i class="fas fa-download mr-2"></i> Generate Report
-        </a>
+<div class="min-h-screen py-8 relative">
+    <!-- Background image with blur -->
+    <div class="fixed inset-0 z-0"
+         style="background-image: url('https://img.freepik.com/free-vector/abstract-blue-light-pipe-speed-zoom-black-background-technology_1142-9980.jpg?t=st=1743151198~exp=1743154798~hmac=c3ec1f8a3fca5e65f54e6e6084be7eda73025676621eed38aa27d4a7eab5bbf8&w=1380');
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+                filter: blur(8px);
+                transform: scale(1.1);">
     </div>
+    
+    <!-- Dark overlay -->
+    <div class="absolute inset-0 bg-black/60 z-10"></div>
 
-    <!-- Stats Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-        <!-- Daily Earnings Card -->
-        <div class="p-4 bg-white rounded-lg shadow dark:bg-gray-800">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Daily Earnings</p>
-                    <p class="text-2xl font-bold text-gray-900 dark:text-white">₹{{ daily_income }}</p>
+    <!-- Main Content -->
+    <div class="p-4 sm:ml-64 relative z-20">
+        <!-- Page Header -->
+        <div class="flex items-center justify-between mb-4">
+            <h1 class="text-2xl font-semibold text-white">Dashboard</h1>
+            <a href="{% url 'report' %}" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                <i class="fas fa-download mr-2"></i> Generate Report
+            </a>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <!-- Daily Earnings Card -->
+            <div class="p-4 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Daily Earnings</p>
+                        <p class="text-2xl font-bold text-gray-900 dark:text-white">₹{{ daily_income }}</p>
+                    </div>
+                    <div class="p-3 bg-blue-100 rounded-full dark:bg-blue-900">
+                        <i class="fas fa-calendar text-blue-500 dark:text-blue-300"></i>
+                    </div>
                 </div>
-                <div class="p-3 bg-blue-100 rounded-full dark:bg-blue-900">
-                    <i class="fas fa-calendar text-blue-500 dark:text-blue-300"></i>
+            </div>
+
+            <!-- Weekly Earnings Card -->
+            <div class="p-4 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Weekly Earnings</p>
+                        <p class="text-2xl font-bold text-gray-900 dark:text-white">₹{{ weekly_income }}</p>
+                    </div>
+                    <div class="p-3 bg-green-100 rounded-full dark:bg-green-900">
+                        <i class="fas fa-dollar-sign text-green-500 dark:text-green-300"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monthly Earnings Card -->
+            <div class="p-4 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Monthly Earnings</p>
+                        <p class="text-2xl font-bold text-gray-900 dark:text-white">₹{{ monthly_income }}</p>
+                    </div>
+                    <div class="p-3 bg-cyan-100 rounded-full dark:bg-cyan-900">
+                        <i class="fas fa-clipboard-list text-cyan-500 dark:text-cyan-300"></i>
+                    </div>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5 mt-4 dark:bg-gray-700">
+                    <div class="bg-cyan-600 h-2.5 rounded-full dark:bg-cyan-500" style="width: 50%"></div>
+                </div>
+            </div>
+
+            <!-- Yearly Earnings Card -->
+            <div class="p-4 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Yearly Earnings</p>
+                        <p class="text-2xl font-bold text-gray-900 dark:text-white">₹{{ yearly_income }}</p>
+                    </div>
+                    <div class="p-3 bg-yellow-100 rounded-full dark:bg-yellow-900">
+                        <i class="fas fa-chart-bar text-yellow-500 dark:text-yellow-300"></i>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Weekly Earnings Card -->
-        <div class="p-4 bg-white rounded-lg shadow dark:bg-gray-800">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Weekly Earnings</p>
-                    <p class="text-2xl font-bold text-gray-900 dark:text-white">₹{{ weekly_income }}</p>
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-1 gap-4">
+            <!-- Area Chart -->
+            <div class="p-4 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white">Earnings Overview</h3>
+                    <button data-dropdown-toggle="earnings-dropdown" class="p-2 text-gray-500 rounded-lg hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <!-- Dropdown menu -->
+                    <div id="earnings-dropdown" class="hidden z-10 w-44 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600">
+                        <ul class="py-1 text-sm text-gray-700 dark:text-gray-200">
+                            <li>
+                                <a href="#" class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Export Data</a>
+                            </li>
+                            <li>
+                                <a href="#" class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Share Report</a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
-                <div class="p-3 bg-green-100 rounded-full dark:bg-green-900">
-                    <i class="fas fa-dollar-sign text-green-500 dark:text-green-300"></i>
+                <div class="relative">
+                    <canvas id="myAreaChart" data-url="{% url 'monthly_income_data' %}" class="w-full h-72"></canvas>
                 </div>
-            </div>
-        </div>
-
-        <!-- Monthly Earnings Card -->
-        <div class="p-4 bg-white rounded-lg shadow dark:bg-gray-800">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Monthly Earnings</p>
-                    <p class="text-2xl font-bold text-gray-900 dark:text-white">₹{{ monthly_income }}</p>
-                </div>
-                <div class="p-3 bg-cyan-100 rounded-full dark:bg-cyan-900">
-                    <i class="fas fa-clipboard-list text-cyan-500 dark:text-cyan-300"></i>
-                </div>
-            </div>
-            <div class="w-full bg-gray-200 rounded-full h-2.5 mt-4 dark:bg-gray-700">
-                <div class="bg-cyan-600 h-2.5 rounded-full dark:bg-cyan-500" style="width: 50%"></div>
-            </div>
-        </div>
-
-        <!-- Yearly Earnings Card -->
-        <div class="p-4 bg-white rounded-lg shadow dark:bg-gray-800">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Yearly Earnings</p>
-                    <p class="text-2xl font-bold text-gray-900 dark:text-white">₹{{ yearly_income }}</p>
-                </div>
-                <div class="p-3 bg-yellow-100 rounded-full dark:bg-yellow-900">
-                    <i class="fas fa-chart-bar text-yellow-500 dark:text-yellow-300"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Charts Section -->
-    <div class="grid grid-cols-1 lg:grid-cols-1 gap-4">
-        <!-- Area Chart -->
-        <div class="p-4 bg-white rounded-lg shadow dark:bg-gray-800">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Earnings Overview</h3>
-                <button data-dropdown-toggle="earnings-dropdown" class="p-2 text-gray-500 rounded-lg hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700">
-                    <i class="fas fa-ellipsis-v"></i>
-                </button>
-                <!-- Dropdown menu -->
-                <div id="earnings-dropdown" class="hidden z-10 w-44 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600">
-                    <ul class="py-1 text-sm text-gray-700 dark:text-gray-200">
-                        <li>
-                            <a href="#" class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Export Data</a>
-                        </li>
-                        <li>
-                            <a href="#" class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Share Report</a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-            <div class="relative">
-                <canvas id="myAreaChart" data-url="{% url 'monthly_income_data' %}" class="w-full h-72"></canvas>
             </div>
         </div>
     </div>

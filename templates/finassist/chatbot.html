@@ -2,21 +2,35 @@
 {% load static %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-6">
-    <div class="max-w-4xl mx-auto px-4">
+<div class="min-h-screen py-6 relative">
+    <!-- Background image with blur -->
+    <div class="fixed inset-0 z-0"
+         style="background-image: url('https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&q=80');
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+                filter: blur(8px);
+                transform: scale(1.1);">
+    </div>
+    
+    <!-- Dark overlay -->
+    <div class="absolute inset-0 bg-black/60 z-10"></div>
+    
+    <!-- Main Content -->
+    <div class="max-w-4xl mx-auto px-4 relative z-20">
         <!-- Breadcrumb -->
         <nav class="flex justify-between mb-6" aria-label="Breadcrumb">
             <ol class="inline-flex items-center space-x-1 text-sm font-medium md:space-x-2">
                 <li class="inline-flex items-center">
-                    <a href="" class="inline-flex items-center text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
+                    <a href="" class="inline-flex items-center text-black-700 dark:text-black-300 hover:text-blue-600 dark:hover:text-blue-400">
                         <i class="fas fa-robot mr-2"></i>
                         Chatbot
                     </a>
                 </li>
                 <li>
                     <div class="flex items-center">
-                        <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
-                        <span class="text-gray-500 dark:text-gray-400">Personal Finance Assistant</span>
+                        <i class="fas fa-chevron-right text-black-400 mx-2"></i>
+                        <span class="text-black-500 dark:text-black-400">Personal Finance Assistant</span>
                     </div>
                 </li>
             </ol>
@@ -27,7 +41,7 @@
         </nav>
 
         <!-- Chat Container -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+        <div class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl">
             {% include 'partials/_messages.html' %}
             
             <!-- Chat History -->
@@ -106,7 +120,7 @@
             </div>
 
             <!-- Message Input -->
-            <form method="post" class="p-4">
+            <form method="post" class="p-4 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-b-lg">
                 {% csrf_token %}
                 <div class="flex space-x-2">
                     <div class="flex-1 relative">
@@ -143,55 +157,6 @@
 <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
 
 <script>
-// Add these functions before the DOMContentLoaded event listener
-
-function formatNewResponse(container) {
-    // Apply custom styling to new elements
-    container.querySelectorAll('a').forEach(function(link) {
-        link.classList.add('text-blue-600', 'dark:text-blue-400', 'hover:underline');
-    });
-    
-    container.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(function(heading) {
-        heading.classList.add('font-bold', 'mt-2', 'mb-1');
-    });
-    
-    container.querySelectorAll('ul, ol').forEach(function(list) {
-        list.classList.add('ml-4', 'my-2');
-    });
-    
-    container.querySelectorAll('table').forEach(function(table) {
-        table.classList.add('border-collapse', 'table-auto', 'w-full', 'text-xs', 'my-2');
-        table.querySelectorAll('th, td').forEach(function(cell) {
-            cell.classList.add('border', 'border-gray-300', 'dark:border-gray-600', 'px-2', 'py-1');
-        });
-        table.querySelectorAll('th').forEach(function(header) {
-            header.classList.add('bg-gray-200', 'dark:bg-gray-600');
-        });
-    });
-}
-
-function updateUIWithNewData(data) {
-    // Update chat history if provided
-    if (data.chat_history) {
-        const chatHistory = document.getElementById('chat-history');
-        // Keep the current scroll position
-        const wasScrolledToBottom = chatHistory.scrollHeight - chatHistory.scrollTop === chatHistory.clientHeight;
-        
-        // Update the chat history HTML
-        chatHistory.innerHTML = data.chat_history;
-        
-        // Reapply formatting to all responses
-        document.querySelectorAll('.formatted-response').forEach(function(element) {
-            formatNewResponse(element);
-        });
-        
-        // Restore scroll position if it was at bottom
-        if (wasScrolledToBottom) {
-            chatHistory.scrollTop = chatHistory.scrollHeight;
-        }
-    }
-}
-
 document.addEventListener('DOMContentLoaded', function() {
     // Scroll to bottom of chat history on load
     const chatHistory = document.getElementById('chat-history');

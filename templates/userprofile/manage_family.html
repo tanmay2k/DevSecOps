@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen py-8 bg-gray-50 dark:bg-gray-900">
+    <div class="container mx-auto px-4 max-w-4xl">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold mb-2 text-gray-900 dark:text-white">
+                    Manage Family Members
+                </h2>
+                <p class="text-gray-600 dark:text-gray-400">
+                    Add or remove family members to share expense tracking
+                </p>
+            </div>
+
+            {% include 'partials/_messages.html' %}
+
+            <!-- Current Family Members -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Current Family Members</h3>
+                {% if family_members %}
+                    <div class="grid gap-4">
+                        {% for member in family_members %}
+                            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                <div>
+                                    <h4 class="font-medium text-gray-900 dark:text-white">
+                                        {{ member.user.get_full_name|default:member.user.username }}
+                                    </h4>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                                        {{ member.relationship }}
+                                    </p>
+                                </div>
+                                <form method="POST" action="{% url 'remove_family_member' member.id %}" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit" 
+                                            class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors duration-200"
+                                            onclick="return confirm('Are you sure you want to remove this family member?')">
+                                        Remove
+                                    </button>
+                                </form>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-gray-500 dark:text-gray-400 text-center py-4">
+                        No family members added yet
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- Add New Family Member Form -->
+            <div>
+                <h3 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Add New Family Member</h3>
+                <form method="POST" action="{% url 'add_family_member' %}" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Username
+                            </label>
+                            <input type="text" 
+                                   name="username" 
+                                   id="username" 
+                                   required
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        </div>
+
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Email
+                            </label>
+                            <input type="email" 
+                                   name="email" 
+                                   id="email" 
+                                   required
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        </div>
+
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Password
+                            </label>
+                            <input type="password" 
+                                   name="password" 
+                                   id="password" 
+                                   required
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        </div>
+
+                        <div>
+                            <label for="relationship" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Relationship
+                            </label>
+                            <input type="text" 
+                                   name="relationship" 
+                                   id="relationship" 
+                                   required
+                                   placeholder="e.g., Spouse, Child, Parent"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end">
+                        <button type="submit" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                            Add Family Member
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

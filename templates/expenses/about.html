@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - Wealth Wizard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+</head>
+<body class="bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-white">
+    <nav class="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 fixed w-full z-50">
+        <div class="max-w-screen-xl flex items-center justify-between mx-auto p-4">
+            <a href="{% url 'landing' %}" class="flex items-center space-x-3">
+                <i class="fas fa-wand-magic-sparkles text-3xl text-blue-500"></i>
+                <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">Wealth Wizard</span>
+            </a>
+        </div>
+    </nav>
+    <main class="pt-24 max-w-screen-xl mx-auto px-4"> 
+        <h1 class="text-4xl font-extrabold mb-6 text-red-500">About Us</h1>
+        <img src="{% static 'img/about_us.jpg' %}" alt="About Us" class="w-full h-auto rounded-lg mb-6">
+        <p class="text-lg text-gray-700 dark:text-gray-300">
+            Welcome to Wealth Wizard, your trusted partner in smart finance tracking. Our mission is to empower individuals to take control of their financial future with AI-powered tools and insights.
+        </p>
+        <p class="text-lg text-gray-700 dark:text-gray-300 mt-4">
+            With features like expense categorization, forecasting, and a financial assistant, we aim to simplify personal finance management for everyone.
+        </p>
+        <p class="text-lg text-gray-700 dark:text-gray-300 mt-4">
+            Wealth Wizard is a personal finance management tool developed by Digambar. It helps users manage their income and expenses with ease.
+        </p>
+        <p class="text-lg text-gray-700 dark:text-gray-300 mt-4">
+            The project includes features like income tracking, expense summaries, financial forecasting, and personalized reports for each family member.
+        </p>
+        <p class="text-lg text-gray-700 dark:text-gray-300 mt-4">
+            Users can add fixed monthly incomes like salary or business and track daily expenses such as food, travel, and medical costs.
+        </p>
+        <p class="text-lg text-gray-700 dark:text-gray-300 mt-4">
+            Wealth Wizard also uses machine learning to provide smart insights and includes an AI chatbot for quick financial assistance.
+        </p>
+        <p class="text-lg text-gray-700 dark:text-gray-300 mt-4">
+            Our goal is to make money management simple, smart, and accessible for everyone.
+        </p>
+    </main>
+    <footer class="pt-24 text-center">
+        <p class="text-lg font-bold text-black">
+            Thank you for using Wealth Wizard!
+        </p>
+    </footer>
+</body>
+</html>

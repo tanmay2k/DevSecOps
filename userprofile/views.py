@@ -1,42 +1,109 @@
-from django.shortcuts import render,redirect,HttpResponseRedirect
-from .forms import User_Profile
-from django.contrib import messages
+from django.shortcuts import render, redirect, HttpResponseRedirect
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.contrib import messages
 from userincome.models import Source
-# Create your views here.
+from .forms import User_Profile, FamilyMemberProfileForm
+from .models import Profile
 
+@login_required(login_url='/authentication/login')
 def userprofile(request):
-    Sources=Source.objects.filter(owner=request.user)
-    if request.user.is_authenticated:
-        if request.method=="POST":
-            form=User_Profile(data=request.POST,instance=request.user)
-            if form.is_valid():
-                form.save()
-                messages.success(request,'Profile Updated Successfully!!')
-        else:
-            form=User_Profile(instance=request.user)
-        return render(request,'userprofile/profile.html',{'form':form,'sources':Sources})
+    try:
+        profile = request.user.profile
+    except Profile.DoesNotExist:
+        profile = Profile.objects.create(user=request.user, account_type='SOLO', profile_type='OWNER')
+    
+    Sources = Source.objects.filter(owner=request.user)
+    family_members = []
+    
+    if profile.account_type == 'MULTI' and profile.is_owner():
+        family_members = Profile.objects.filter(owner=request.user)
+    
+    if request.method == "POST":
+        form = User_Profile(data=request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Profile Updated Successfully!!')
     else:
-        messages.info(request,"You need to login first to view your profile")
-        return HttpResponseRedirect('/authentication/login/')
+        form = User_Profile(instance=request.user)
     
-def addSource(request):
-    form=User_Profile(instance=request.user)
-    if request.method=="POST":
-        newSource=request.POST['Source']
-        if Source.objects.filter(name=newSource,owner=request.user).exists():
-            messages.warning(request,"Income source already Exists")
-            return HttpResponseRedirect('/account/')
-        if len(newSource)==0:
-            return HttpResponseRedirect('/account/')
-        newsourceadded=Source.objects.create(name=newSource, owner=request.user)
-        newsourceadded.save()
+    context = {
+        'form': form,
+        'sources': Sources,
+        'profile': profile,
+        'family_members': family_members,
+        'family_member_form': FamilyMemberProfileForm()
+    }
+    return render(request, 'userprofile/profile.html', context)
 
-        messages.success(request,'Source added successfully')
-        return HttpResponseRedirect('/account/')
+@login_required(login_url='/authentication/login')
+def add_family_member(request):
+    if request.method != "POST":
+        return redirect('account')
+        
+    try:
+        owner_profile = request.user.profile
+        if not owner_profile.is_owner() or owner_profile.account_type != 'MULTI':
+            messages.error(request, "You don't have permission to add family members")
+            return redirect('account')
+        
+        form = FamilyMemberProfileForm(request.POST)
+        if form.is_valid():
+            username = request.POST.get('username')
+            email = request.POST.get('email')
+            relationship = form.cleaned_data['relationship']
+            
+            # Create user account for family member
+            user = User.objects.create_user(username=username, email=email)
+            user.set_password(request.POST.get('password'))
+            user.save()
+            
+            # Create profile for family member
+            Profile.objects.create(
+                user=user,
+                profile_type='MEMBER',
+                account_type='MULTI',
+                owner=request.user,
+                relationship=relationship
+            )
+            
+            messages.success(request, f'Family member {username} added successfully')
+        else:
+            messages.error(request, 'Invalid form submission')
+    except Exception as e:
+        messages.error(request, f'Error adding family member: {str(e)}')
     
-def deleteSource(request,id):
-    obj=Source.objects.get(pk=id)
-    Source.delete(obj)
-    messages.success(request,"source deleted successfully")
+    return redirect('account')
+
+@login_required(login_url='/authentication/login')
+def remove_family_member(request, member_id):
+    try:
+        owner_profile = request.user.profile
+        if not owner_profile.is_owner() or owner_profile.account_type != 'MULTI':
+            messages.error(request, "You don't have permission to remove family members")
+            return redirect('account')
+            
+        member_profile = Profile.objects.get(id=member_id, owner=request.user)
+        user = member_profile.user
+        member_profile.delete()
+        user.delete()
+        messages.success(request, "Family member removed successfully")
+    except Profile.DoesNotExist:
+        messages.error(request, "Family member not found")
+    except Exception as e:
+        messages.error(request, f"Error removing family member: {str(e)}")
+    
+    return redirect('account')
+
+def addSource(request):
+    if request.method == "POST":
+        newSource = request.POST['Source']
+        if Source.objects.filter(name=newSource, owner=request.user).exists():
+            messages.warning(request, "Income source already Exists")
+            return HttpResponseRedirect('/account/')
+        if len(newSource) == 0:
+            return HttpResponseRedirect('/account/')
+        newsourceadded = Source.objects.create(name=newSource, owner=request.user)
+        newsourceadded.save()
+        messages.success(request, 'Source added successfully')
     return HttpResponseRedirect('/account/')
