@@ -2,120 +2,730 @@
 {% load static %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    {% if messages %}
-        {% include 'partials/_messages.html' %}
-    {% else %}
-        <!-- Main Header -->
-        <div class="mb-8 transition-all">
-            <h1 class="text-4xl font-extrabold text-gray-900 dark:text-white flex flex-wrap items-center">
-                Expense Forecast
-                <span class="bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-2xl font-semibold px-3 py-1 rounded-lg ml-3 mt-2 sm:mt-0">
-                    Next 30 Days
-                </span>
-            </h1>
+<div class="min-h-screen py-6 relative">
+    <!-- Background image with blur -->
+    <div class="fixed inset-0 z-0"
+         style="background-image: url('https://images.pexels.com/photos/186461/pexels-photo-186461.jpeg');
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+                filter: blur(8px);
+                transform: scale(1.1);">
+    </div>
+    
+    <!-- Dark overlay -->
+    <div class="absolute inset-0 bg-black/40 dark:bg-black/70 z-10"></div>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 relative z-20">
+        {% if messages %}
+            {% include 'partials/_messages.html' %}
+        {% else %}
+        
+        <!-- Main Header & Stats Card -->
+        <div class="mb-6 transition-all bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm p-5 rounded-lg shadow-lg">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-1">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                        Expense Forecast
+                        <span class="bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-lg font-medium px-3 py-1 rounded-full">
+                            Next 30 Days
+                        </span>
+                    </h1>
+                    
+                    {% if model_accuracy >= 50 %}
+                    <div class="mt-2 inline-flex items-center bg-green-100 dark:bg-green-900 rounded-full px-3 py-0.5">
+                        <span class="text-green-800 dark:text-green-200 font-medium text-sm">
+                            <i class="fas fa-check-circle mr-1"></i>High Confidence ({{ model_accuracy }}%)
+                        </span>
+                    </div>
+                    {% elif model_accuracy >= 20 %}
+                    <div class="mt-2 inline-flex items-center bg-yellow-100 dark:bg-yellow-900 rounded-full px-3 py-0.5">
+                        <span class="text-yellow-800 dark:text-yellow-200 font-medium text-sm">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>Medium Confidence ({{ model_accuracy }}%)
+                        </span>
+                    </div>
+                    {% else %}
+                    <div class="mt-2 inline-flex items-center bg-red-100 dark:bg-red-900 rounded-full px-3 py-0.5">
+                        <span class="text-red-800 dark:text-red-200 font-medium text-sm">
+                            <i class="fas fa-exclamation-circle mr-1"></i>Low Confidence ({{ model_accuracy }}%)
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mt-4 md:mt-0 bg-purple-100 dark:bg-purple-900 rounded-lg p-3 shadow-sm">
+                    <div class="text-center">
+                        <p class="text-sm font-semibold text-gray-600 dark:text-gray-300">Total Predicted Expense</p>
+                        <p class="text-3xl font-bold text-purple-600 dark:text-purple-400 mt-1">{{total_forecasted_expenses}}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Model Info Pills -->
+            <div class="mt-4 flex flex-wrap gap-2 text-xs">
+                <div class="bg-gray-100 dark:bg-gray-700 rounded-full px-3 py-1 flex items-center">
+                    <span class="text-gray-600 dark:text-gray-300">Model: </span>
+                    <span class="ml-1 font-medium text-gray-800 dark:text-gray-200">{{ model_name|default:"ARIMA" }}</span>
+                </div>
+                
+                <div class="bg-gray-100 dark:bg-gray-700 rounded-full px-3 py-1 flex items-center">
+                    <span class="text-gray-600 dark:text-gray-300">MAE: </span>
+                    <span class="ml-1 font-medium text-gray-800 dark:text-gray-200">{{ mean_absolute_error }}</span>
+                </div>
+                
+                <div class="bg-gray-100 dark:bg-gray-700 rounded-full px-3 py-1 flex items-center">
+                    <span class="text-gray-600 dark:text-gray-300">MAPE: </span>
+                    <span class="ml-1 font-medium text-gray-800 dark:text-gray-200">{{ mape }}%</span>
+                </div>
+            </div>
         </div>
 
-        <!-- Stats Overview -->
-        <div class="mb-8">
-            <div class="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-purple-800 transition-all hover:shadow-xl transform hover:-translate-y-1 duration-300">
-                <div class="flex flex-col sm:flex-row items-center">
-                    <div class="inline-flex flex-shrink-0 justify-center items-center w-16 h-16 text-purple-700 dark:text-purple-200 bg-purple-100 dark:bg-purple-900 rounded-full mb-4 sm:mb-0">
-                        <i class="fas fa-chart-line fa-2x"></i>
-                    </div>
-                    <div class="text-center sm:text-left sm:ml-6">
-                        <h2 class="text-xl font-bold text-gray-700 dark:text-gray-100">Total Predicted Expense</h2>
-                        <p class="text-4xl font-bold text-purple-600 dark:text-purple-400">{{total_forecasted_expenses}}</p>
-                    </div>
+        <!-- Chart Section -->
+        <div class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden border border-gray-200 dark:border-purple-800 transition-all mb-6">
+            <div class="p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-purple-800">
+                <h2 class="text-xl font-bold text-gray-800 dark:text-white flex items-center">
+                    <i class="fas fa-chart-area mr-2 text-purple-600 dark:text-purple-400"></i>
+                    Expense Forecast Visualization
+                </h2>
+            </div>
+            <div class="p-4">
+                <div class="relative rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-900">
+                    {{plot_div|safe}}
                 </div>
             </div>
         </div>
 
         <!-- Main Content Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            <!-- Daily Forecast Table -->
-            <div class="relative overflow-hidden shadow-lg rounded-lg border border-gray-200 dark:border-purple-800 transition-all hover:shadow-xl transform hover:-translate-y-1 duration-300">
-                <div class="p-5 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-purple-800">
-                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-2 flex items-center">
-                        <span class="mr-3 text-purple-600 dark:text-purple-400">
-                            <i class="fas fa-calendar-day"></i>
-                        </span>
-                        Daily Forecast
-                    </h2>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left text-gray-700 dark:text-gray-300">
-                        <thead class="text-xs uppercase bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
-                            <tr>
-                                <th scope="col" class="px-6 py-4">Date</th>
-                                <th scope="col" class="px-6 py-4">Forecasted Expenses</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for row in forecast_data %}
-                            <tr class="border-b bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                <td class="px-6 py-4 font-medium">{{ row.Date }}</td>
-                                <td class="px-6 py-4">{{ row.Forecasted_Expenses }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Category Breakdown Table -->
-            <div class="relative overflow-hidden shadow-lg rounded-lg border border-gray-200 dark:border-purple-800 transition-all hover:shadow-xl transform hover:-translate-y-1 duration-300">
-                <div class="p-5 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-purple-800">
-                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-2 flex items-center">
-                        <span class="mr-3 text-purple-600 dark:text-purple-400">
-                            <i class="fas fa-tags"></i>
-                        </span>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- Category Breakdown -->
+            <div class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 dark:border-purple-800">
+                <div class="p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-purple-800 flex justify-between items-center">
+                    <h2 class="text-lg font-bold text-gray-800 dark:text-white flex items-center">
+                        <i class="fas fa-tags mr-2 text-purple-600 dark:text-purple-400"></i>
                         Category Breakdown
                     </h2>
+                    <div class="flex space-x-2">
+                        <button id="viewChartBtn" class="px-2 py-1 text-xs rounded-lg bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 font-medium">
+                            <i class="fas fa-chart-pie mr-1"></i>Chart
+                        </button>
+                        <button id="viewListBtn" class="px-2 py-1 text-xs rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium">
+                            <i class="fas fa-list mr-1"></i>List
+                        </button>
+                    </div>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left text-gray-700 dark:text-gray-300">
-                        <thead class="text-xs uppercase bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
-                            <tr>
-                                <th scope="col" class="px-6 py-4">Category</th>
-                                <th scope="col" class="px-6 py-4">Total Forecasted</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for category, expenses in category_forecasts.items %}
-                            <tr class="border-b bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                <td class="px-6 py-4 font-medium">{{ category }}</td>
-                                <td class="px-6 py-4">{{ expenses }}</td>
-                            </tr>
+                <div class="p-4">
+                    {% if category_forecasts %}
+                        <!-- Chart View -->
+                        <div id="categoryChartView" class="flex flex-col items-center">
+                            <div class="w-48 h-48 mb-4 relative">
+                                <canvas id="categoryDonutChart"></canvas>
+                                <div class="absolute inset-0 flex items-center justify-center flex-col">
+                                    <span class="text-xs text-gray-500 dark:text-gray-400">Total</span>
+                                    <span class="font-bold text-lg text-gray-800 dark:text-gray-200">{{total_forecasted_expenses}}</span>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3 w-full text-xs">
+                                {% if category_forecasts.items %}
+                                    {% for category, expenses in category_forecasts.items %}
+                                        <div class="flex items-center" data-category-index="{{ forloop.counter0 }}">
+                                            <span class="w-3 h-3 rounded-full mr-1 category-color-{{ forloop.counter0 }}"></span>
+                                            <span class="truncate text-gray-700 dark:text-gray-300">{{ category }}</span>
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    {% for item in category_forecasts %}
+                                        <div class="flex items-center" data-category-index="{{ forloop.counter0 }}">
+                                            <span class="w-3 h-3 rounded-full mr-1 category-color-{{ forloop.counter0 }}"></span>
+                                            <span class="truncate text-gray-700 dark:text-gray-300">{{ item.category|default:item.0 }}</span>
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- List View (Hidden by default) -->
+                        <div id="categoryListView" class="hidden space-y-3">
+                            {% if category_forecasts.items %}
+                                {% for category, expenses in category_forecasts.items %}
+                                <div class="p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="flex items-center">
+                                            <div class="w-3 h-3 rounded-full category-color-{{ forloop.counter0 }} mr-2"></div>
+                                            <span class="font-medium text-gray-700 dark:text-gray-200">{{ category }}</span>
+                                        </div>
+                                        <span class="text-purple-600 dark:text-purple-400 font-bold">{{ expenses }}</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                                        <div class="category-color-{{ forloop.counter0 }} h-1.5 rounded-full" style="width: {{ expenses|floatformat:0 }}%"></div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                {% for item in category_forecasts %}
+                                <div class="p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="flex items-center">
+                                            <div class="w-3 h-3 rounded-full category-color-{{ forloop.counter0 }} mr-2"></div>
+                                            <span class="font-medium text-gray-700 dark:text-gray-200">{{ item.category|default:item.0 }}</span>
+                                        </div>
+                                        <span class="text-purple-600 dark:text-purple-400 font-bold">{{ item.amount|default:item.1 }}</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                                        <div class="category-color-{{ forloop.counter0 }} h-1.5 rounded-full" style="width: {{ item.amount|default:item.1|floatformat:0 }}%"></div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div id="noDataFallback" class="p-4">
+                            <div id="categoryChartView" class="flex flex-col items-center">
+                                <div class="w-48 h-48 mb-4 relative">
+                                    <canvas id="fallbackCategoryChart"></canvas>
+                                    <div class="absolute inset-0 flex items-center justify-center flex-col">
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">Total</span>
+                                        <span class="font-bold text-lg text-gray-800 dark:text-gray-200">{{total_forecasted_expenses}}</span>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3 w-full text-xs">
+                                    <div class="flex items-center" data-category-index="0">
+                                        <span class="w-3 h-3 rounded-full mr-1 category-color-0"></span>
+                                        <span class="truncate text-gray-700 dark:text-gray-300">General</span>
+                                    </div>
+                                    <div class="flex items-center" data-category-index="1">
+                                        <span class="w-3 h-3 rounded-full mr-1 category-color-1"></span>
+                                        <span class="truncate text-gray-700 dark:text-gray-300">Food</span>
+                                    </div>
+                                    <div class="flex items-center" data-category-index="2">
+                                        <span class="w-3 h-3 rounded-full mr-1 category-color-2"></span>
+                                        <span class="truncate text-gray-700 dark:text-gray-300">Transportation</span>
+                                    </div>
+                                    <div class="flex items-center" data-category-index="3">
+                                        <span class="w-3 h-3 rounded-full mr-1 category-color-3"></span>
+                                        <span class="truncate text-gray-700 dark:text-gray-300">Utilities</span>
+                                    </div>
+                                </div>
+                                <div class="mt-4 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-100 dark:border-yellow-800/30">
+                                    <p class="text-xs text-yellow-700 dark:text-yellow-200 text-center">
+                                        <i class="fas fa-info-circle mr-1"></i>Sample data shown. Add more categorized expenses for actual breakdown.
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div id="categoryListView" class="hidden space-y-3">
+                                <div class="p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="flex items-center">
+                                            <div class="w-3 h-3 rounded-full category-color-0 mr-2"></div>
+                                            <span class="font-medium text-gray-700 dark:text-gray-200">General</span>
+                                        </div>
+                                        <span class="text-purple-600 dark:text-purple-400 font-bold">40%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                                        <div class="category-color-0 h-1.5 rounded-full" style="width: 40%"></div>
+                                    </div>
+                                </div>
+                                <div class="p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="flex items-center">
+                                            <div class="w-3 h-3 rounded-full category-color-1 mr-2"></div>
+                                            <span class="font-medium text-gray-700 dark:text-gray-200">Food</span>
+                                        </div>
+                                        <span class="text-purple-600 dark:text-purple-400 font-bold">30%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                                        <div class="category-color-1 h-1.5 rounded-full" style="width: 30%"></div>
+                                    </div>
+                                </div>
+                                <div class="p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="flex items-center">
+                                            <div class="w-3 h-3 rounded-full category-color-2 mr-2"></div>
+                                            <span class="font-medium text-gray-700 dark:text-gray-200">Transportation</span>
+                                        </div>
+                                        <span class="text-purple-600 dark:text-purple-400 font-bold">20%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                                        <div class="category-color-2 h-1.5 rounded-full" style="width: 20%"></div>
+                                    </div>
+                                </div>
+                                <div class="p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="flex items-center">
+                                            <div class="w-3 h-3 rounded-full category-color-3 mr-2"></div>
+                                            <span class="font-medium text-gray-700 dark:text-gray-200">Utilities</span>
+                                        </div>
+                                        <span class="text-purple-600 dark:text-purple-400 font-bold">10%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                                        <div class="category-color-3 h-1.5 rounded-full" style="width: 10%"></div>
+                                    </div>
+                                </div>
+                                <div class="mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-100 dark:border-yellow-800/30">
+                                    <p class="text-xs text-yellow-700 dark:text-yellow-200 text-center">
+                                        <i class="fas fa-info-circle mr-1"></i>Sample data shown. Add more categorized expenses for actual breakdown.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Daily Forecast -->
+            <div class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 dark:border-purple-800">
+                <div class="p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-purple-800">
+                    <h2 class="text-lg font-bold text-gray-800 dark:text-white flex items-center">
+                        <i class="fas fa-calendar-day mr-2 text-purple-600 dark:text-purple-400"></i>
+                        Daily Forecast Highlights
+                    </h2>
+                </div>
+                <div class="overflow-y-auto max-h-[300px] p-2">
+                    <div class="space-y-3 p-2">
+                        {% for row in forecast_data|slice:":10" %}
+                        <div class="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition">
+                            <span class="font-medium text-gray-700 dark:text-gray-200">{{ row.Date|date:"M d" }}</span>
+                            <span class="text-purple-600 dark:text-purple-400 font-bold">{{ row.Forecasted_Expenses }}</span>
+                        </div>
+                        {% endfor %}
+                        {% if forecast_data|length > 10 %}
+                        <div class="text-center py-2">
+                            <button class="text-sm text-purple-600 dark:text-purple-400 hover:underline" id="showMoreForecast">
+                                Show All ({{ forecast_data|length }} days) <i class="fas fa-chevron-down ml-1"></i>
+                            </button>
+                        </div>
+                        <div id="fullForecastData" class="hidden space-y-3">
+                            {% for row in forecast_data|slice:"10:" %}
+                            <div class="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition">
+                                <span class="font-medium text-gray-700 dark:text-gray-200">{{ row.Date|date:"M d" }}</span>
+                                <span class="text-purple-600 dark:text-purple-400 font-bold">{{ row.Forecasted_Expenses }}</span>
+                            </div>
                             {% endfor %}
-                        </tbody>
-                    </table>
+                        </div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Forecast Plot -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-200 dark:border-purple-800 transition-all hover:shadow-xl transform hover:-translate-y-1 duration-300">
-            <div class="p-5 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-purple-800">
-                <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-2 flex items-center">
-                    <span class="mr-3 text-purple-600 dark:text-purple-400">
-                        <i class="fas fa-chart-area"></i>
-                    </span>
-                    Expense Trend Visualization
+        <!-- Tips Section -->
+        <div class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden border border-gray-200 dark:border-purple-800 transition-all mb-8">
+            <div class="p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-purple-800">
+                <h2 class="text-lg font-bold text-gray-800 dark:text-white flex items-center">
+                    <i class="fas fa-lightbulb mr-2 text-yellow-500"></i>
+                    Improve Your Forecast Accuracy
                 </h2>
             </div>
-            <div class="p-6">
-                <div class="relative rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-900 p-4">
-                    <img 
-                        src="{% static 'img/forecast_plot.png' %}" 
-                        alt="Expense Forecast Plot" 
-                        class="w-full h-auto rounded-lg shadow-md"
-                    >
+            <div class="p-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-blue-50 dark:bg-gray-700 rounded-lg p-4 shadow-md border border-blue-100 dark:border-blue-700">
+                        <div class="flex items-center mb-3">
+                            <div class="flex-shrink-0 flex items-center justify-center w-8 h-8 bg-blue-100 dark:bg-blue-500 rounded-full mr-2 shadow-sm">
+                                <span class="text-blue-700 dark:text-white font-semibold">1</span>
+                            </div>
+                            <h3 class="font-medium text-gray-800 dark:text-white">Add More Data</h3>
+                        </div>
+                        <p class="text-sm text-gray-700 dark:text-gray-50">The more consistent expense data you record, the more accurate the forecast will be.</p>
+                    </div>
+                    
+                    <div class="bg-purple-50 dark:bg-gray-700 rounded-lg p-4 shadow-md border border-purple-100 dark:border-purple-700">
+                        <div class="flex items-center mb-3">
+                            <div class="flex-shrink-0 flex items-center justify-center w-8 h-8 bg-purple-100 dark:bg-purple-500 rounded-full mr-2 shadow-sm">
+                                <span class="text-purple-700 dark:text-white font-semibold">2</span>
+                            </div>
+                            <h3 class="font-medium text-gray-800 dark:text-white">Use Consistent Categories</h3>
+                        </div>
+                        <p class="text-sm text-gray-700 dark:text-gray-50">Using consistent categories helps the model recognize patterns in your spending.</p>
+                    </div>
+                    
+                    <div class="bg-green-50 dark:bg-gray-700 rounded-lg p-4 shadow-md border border-green-100 dark:border-green-700">
+                        <div class="flex items-center mb-3">
+                            <div class="flex-shrink-0 flex items-center justify-center w-8 h-8 bg-green-100 dark:bg-green-500 rounded-full mr-2 shadow-sm">
+                                <span class="text-green-700 dark:text-white font-semibold">3</span>
+                            </div>
+                            <h3 class="font-medium text-gray-800 dark:text-white">Record Regular Expenses</h3>
+                        </div>
+                        <p class="text-sm text-gray-700 dark:text-gray-50">Including regular payments (rent, subscriptions) helps identify your spending patterns.</p>
+                    </div>
                 </div>
             </div>
         </div>
-    {% endif %}
+        {% endif %}
+    </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Detect system theme preference
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    let currentTheme = prefersDark ? 'dark' : 'light';
+    
+    // Update Chart theme when system theme changes
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+        currentTheme = event.matches ? 'dark' : 'light';
+        updateChartTheme();
+    });
+    
+    function updateChartTheme() {
+        const chart = Chart.getChart('categoryDonutChart');
+        if (!chart) return;
+        
+        // Update chart theme
+        chart.options.plugins.tooltip.backgroundColor = currentTheme === 'dark' ? 'rgba(30, 41, 59, 0.8)' : 'rgba(255, 255, 255, 0.8)';
+        chart.options.plugins.tooltip.titleColor = currentTheme === 'dark' ? '#e2e8f0' : '#1e293b';
+        chart.options.plugins.tooltip.bodyColor = currentTheme === 'dark' ? '#e2e8f0' : '#1e293b';
+        chart.options.plugins.tooltip.borderColor = currentTheme === 'dark' ? 'rgba(148, 163, 184, 0.2)' : 'rgba(100, 116, 139, 0.2)';
+        chart.update();
+    }
+    
+    // Show/hide full forecast data
+    const showMoreBtn = document.getElementById('showMoreForecast');
+    const fullForecastData = document.getElementById('fullForecastData');
+    
+    if (showMoreBtn) {
+        showMoreBtn.addEventListener('click', function() {
+            if (fullForecastData.classList.contains('hidden')) {
+                fullForecastData.classList.remove('hidden');
+                showMoreBtn.innerHTML = 'Show Less <i class="fas fa-chevron-up ml-1"></i>';
+            } else {
+                fullForecastData.classList.add('hidden');
+                showMoreBtn.innerHTML = 'Show All ({{ forecast_data|length }} days) <i class="fas fa-chevron-down ml-1"></i>';
+            }
+        });
+    }
+
+    // Toggle between chart and list views
+    const viewChartBtn = document.getElementById('viewChartBtn');
+    const viewListBtn = document.getElementById('viewListBtn');
+    const categoryChartView = document.getElementById('categoryChartView');
+    const categoryListView = document.getElementById('categoryListView');
+    
+    if (viewChartBtn && viewListBtn) {
+        viewChartBtn.addEventListener('click', function() {
+            categoryChartView.classList.remove('hidden');
+            categoryListView.classList.add('hidden');
+            viewChartBtn.classList.replace('bg-gray-100', 'bg-purple-100');
+            viewChartBtn.classList.replace('dark:bg-gray-700', 'dark:bg-purple-900');
+            viewChartBtn.classList.replace('text-gray-700', 'text-purple-800');
+            viewChartBtn.classList.replace('dark:text-gray-300', 'dark:text-purple-200');
+            viewListBtn.classList.replace('bg-purple-100', 'bg-gray-100');
+            viewListBtn.classList.replace('dark:bg-purple-900', 'dark:bg-gray-700');
+            viewListBtn.classList.replace('text-purple-800', 'text-gray-700');
+            viewListBtn.classList.replace('dark:text-purple-200', 'dark:text-gray-300');
+        });
+        
+        viewListBtn.addEventListener('click', function() {
+            categoryChartView.classList.add('hidden');
+            categoryListView.classList.remove('hidden');
+            viewListBtn.classList.replace('bg-gray-100', 'bg-purple-100');
+            viewListBtn.classList.replace('dark:bg-gray-700', 'dark:bg-purple-900');
+            viewListBtn.classList.replace('text-gray-700', 'text-purple-800');
+            viewListBtn.classList.replace('dark:text-gray-300', 'dark:text-purple-200');
+            viewChartBtn.classList.replace('bg-purple-100', 'bg-gray-100');
+            viewChartBtn.classList.replace('dark:bg-purple-900', 'dark:bg-gray-700');
+            viewChartBtn.classList.replace('text-purple-800', 'text-gray-700');
+            viewChartBtn.classList.replace('dark:text-purple-200', 'dark:text-gray-300');
+        });
+    }
+    
+    // Generate the donut chart for category breakdown
+    if (document.getElementById('categoryDonutChart')) {
+        console.log("Initializing category chart");
+        const categoryColors = [
+            '#8b5cf6', // Purple
+            '#ec4899', // Pink
+            '#3b82f6', // Blue
+            '#10b981', // Green
+            '#f59e0b', // Amber
+            '#ef4444', // Red
+            '#6366f1', // Indigo
+            '#14b8a6', // Teal
+            '#f97316', // Orange
+            '#8b5cf6', // Purple (repeated if needed)
+            '#06b6d4', // Cyan
+            '#db2777', // Pink dark
+        ];
+        
+        // Add color classes to CSS
+        const styleSheet = document.createElement('style');
+        let colorStyles = '';
+        
+        for (let i = 0; i < categoryColors.length; i++) {
+            colorStyles += `.category-color-${i} { background-color: ${categoryColors[i]}; }`;
+        }
+        
+        styleSheet.innerText = colorStyles;
+        document.head.appendChild(styleSheet);
+        
+        {% if category_forecasts %}
+        try {
+            // Prepare data for the chart
+            const categoryLabels = [];
+            const categoryValues = [];
+            
+            {% if category_forecasts.items %}
+                {% for category, expenses in category_forecasts.items %}
+                    categoryLabels.push("{{ category }}");
+                    try {
+                        // Handle different data types and formats
+                        let expenseValue = {{ expenses }};
+                        if (isNaN(expenseValue) || expenseValue === null) {
+                            expenseValue = 0;
+                        }
+                        categoryValues.push(expenseValue);
+                        console.log("Category: {{ category }}, Value: ", expenseValue);
+                    } catch (e) {
+                        console.error("Error parsing expense value for {{ category }}:", e);
+                        categoryValues.push(0);
+                    }
+                {% endfor %}
+            {% else %}
+                {% for item in category_forecasts %}
+                    categoryLabels.push("{{ item.category|default:item.0 }}");
+                    try {
+                        // Handle different data types and formats
+                        let expenseValue = {{ item.amount|default:item.1 }};
+                        if (isNaN(expenseValue) || expenseValue === null) {
+                            expenseValue = 0;
+                        }
+                        categoryValues.push(expenseValue);
+                        console.log("Category: {{ item.category|default:item.0 }}, Value: ", expenseValue);
+                    } catch (e) {
+                        console.error("Error parsing expense value for {{ item.category|default:item.0 }}:", e);
+                        categoryValues.push(0);
+                    }
+                {% endfor %}
+            {% endif %}
+            
+            // Safety check - if we have no data, show a message
+            if (categoryLabels.length === 0 || categoryValues.every(val => val === 0)) {
+                throw new Error("No valid category data available");
+            }
+            
+            console.log("Chart data:", { labels: categoryLabels, values: categoryValues });
+            
+            // Create the chart with theme-aware config
+            const ctx = document.getElementById('categoryDonutChart').getContext('2d');
+            const categoryChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: categoryLabels,
+                    datasets: [{
+                        data: categoryValues,
+                        backgroundColor: categoryColors.slice(0, categoryLabels.length),
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: currentTheme === 'dark' ? 'rgba(30, 41, 59, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+                            titleColor: currentTheme === 'dark' ? '#e2e8f0' : '#1e293b',
+                            bodyColor: currentTheme === 'dark' ? '#e2e8f0' : '#1e293b',
+                            borderColor: currentTheme === 'dark' ? 'rgba(148, 163, 184, 0.2)' : 'rgba(100, 116, 139, 0.2)',
+                            borderWidth: 1,
+                            padding: 10,
+                            cornerRadius: 6,
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Handle hover effects
+            document.querySelectorAll('[data-category-index]').forEach(item => {
+                item.addEventListener('mouseenter', function() {
+                    const index = parseInt(this.getAttribute('data-category-index'));
+                    
+                    // Highlight the section in the chart
+                    const chart = Chart.getChart('categoryDonutChart');
+                    if (chart) {
+                        chart.setActiveElements([{ datasetIndex: 0, index: index }]);
+                        chart.update();
+                    }
+                    
+                    this.classList.add('font-medium');
+                });
+                
+                item.addEventListener('mouseleave', function() {
+                    // Remove highlight
+                    const chart = Chart.getChart('categoryDonutChart');
+                    if (chart) {
+                        chart.setActiveElements([]);
+                        chart.update();
+                    }
+                    
+                    this.classList.remove('font-medium');
+                });
+            });
+        } catch (e) {
+            console.error("Error creating category chart:", e);
+            
+            // Show fallback table view if chart fails
+            document.getElementById('categoryChartView').classList.add('hidden');
+            document.getElementById('categoryListView').classList.remove('hidden');
+            document.getElementById('viewChartBtn').classList.add('opacity-50');
+            document.getElementById('viewChartBtn').disabled = true;
+            
+            // Update button styles
+            document.getElementById('viewListBtn').classList.replace('bg-gray-100', 'bg-purple-100');
+            document.getElementById('viewListBtn').classList.replace('dark:bg-gray-700', 'dark:bg-purple-900');
+            document.getElementById('viewListBtn').classList.replace('text-gray-700', 'text-purple-800');
+            document.getElementById('viewListBtn').classList.replace('dark:text-gray-300', 'dark:text-purple-200');
+        }
+        {% endif %}
+    }
+    
+    // Add MutationObserver to handle theme changes from user preferences
+    const observer = new MutationObserver(mutations => {
+        mutations.forEach(mutation => {
+            if (mutation.attributeName === 'class' && 
+                (mutation.target.classList.contains('dark') || 
+                !mutation.target.classList.contains('dark'))) {
+                // Theme has changed
+                currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+                updateChartTheme();
+                updateFallbackChartTheme();
+            }
+        });
+    });
+    
+    // Start observing html element for class changes
+    observer.observe(document.documentElement, { 
+        attributes: true,
+        attributeFilter: ['class']
+    });
+    
+    // Generate fallback chart if needed
+    if (document.getElementById('fallbackCategoryChart')) {
+        console.log("Creating fallback category chart");
+        
+        // Sample data for fallback chart
+        const fallbackLabels = ['General', 'Food', 'Transportation', 'Utilities'];
+        const fallbackValues = [40, 30, 20, 10];
+        
+        function updateFallbackChartTheme() {
+            const chart = Chart.getChart('fallbackCategoryChart');
+            if (!chart) return;
+            
+            chart.options.plugins.tooltip.backgroundColor = currentTheme === 'dark' ? 'rgba(30, 41, 59, 0.8)' : 'rgba(255, 255, 255, 0.8)';
+            chart.options.plugins.tooltip.titleColor = currentTheme === 'dark' ? '#e2e8f0' : '#1e293b';
+            chart.options.plugins.tooltip.bodyColor = currentTheme === 'dark' ? '#e2e8f0' : '#1e293b';
+            chart.options.plugins.tooltip.borderColor = currentTheme === 'dark' ? 'rgba(148, 163, 184, 0.2)' : 'rgba(100, 116, 139, 0.2)';
+            chart.update();
+        }
+        
+        try {
+            // Create the fallback chart with theme-aware config
+            const ctx = document.getElementById('fallbackCategoryChart').getContext('2d');
+            const fallbackChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: fallbackLabels,
+                    datasets: [{
+                        data: fallbackValues,
+                        backgroundColor: categoryColors.slice(0, fallbackLabels.length),
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: currentTheme === 'dark' ? 'rgba(30, 41, 59, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+                            titleColor: currentTheme === 'dark' ? '#e2e8f0' : '#1e293b',
+                            bodyColor: currentTheme === 'dark' ? '#e2e8f0' : '#1e293b',
+                            borderColor: currentTheme === 'dark' ? 'rgba(148, 163, 184, 0.2)' : 'rgba(100, 116, 139, 0.2)',
+                            borderWidth: 1,
+                            padding: 10,
+                            cornerRadius: 6,
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw;
+                                    const percentage = Math.round((value / 100) * 100);
+                                    return `${label}: ${percentage}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Handle hover effects for fallback chart
+            document.querySelectorAll('#noDataFallback [data-category-index]').forEach(item => {
+                item.addEventListener('mouseenter', function() {
+                    const index = parseInt(this.getAttribute('data-category-index'));
+                    
+                    // Highlight the section in the chart
+                    const chart = Chart.getChart('fallbackCategoryChart');
+                    if (chart) {
+                        chart.setActiveElements([{ datasetIndex: 0, index: index }]);
+                        chart.update();
+                    }
+                    
+                    this.classList.add('font-medium');
+                });
+                
+                item.addEventListener('mouseleave', function() {
+                    // Remove highlight
+                    const chart = Chart.getChart('fallbackCategoryChart');
+                    if (chart) {
+                        chart.setActiveElements([]);
+                        chart.update();
+                    }
+                    
+                    this.classList.remove('font-medium');
+                });
+            });
+        } catch (e) {
+            console.error("Error creating fallback category chart:", e);
+        }
+    }
+    
+    // Add MutationObserver to handle theme changes from user preferences
+    const observer = new MutationObserver(mutations => {
+        mutations.forEach(mutation => {
+            if (mutation.attributeName === 'class' && 
+                (mutation.target.classList.contains('dark') || 
+                !mutation.target.classList.contains('dark'))) {
+                // Theme has changed
+                currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+                updateChartTheme();
+            }
+        });
+    });
+    
+    // Start observing html element for class changes
+    observer.observe(document.documentElement, { 
+        attributes: true,
+        attributeFilter: ['class']
+    });
+});
+</script>
+
+<!-- Include Chart.js for donut chart -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 
 <!-- Add custom styles for transitions and theme compatibility -->
 <style>
@@ -131,31 +741,68 @@
     
     /* Animation for data loading */
     @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
+        from { opacity: 0; transform: translateY(5px); }
         to { opacity: 1; transform: translateY(0); }
     }
     
-    /* Apply animation to tables and cards */
-    table tbody tr {
+    /* Apply animation to elements */
+    .space-y-3 > div {
         animation: fadeIn 0.3s ease-out forwards;
-        animation-delay: calc(var(--row-index, 0) * 0.05s);
+        animation-delay: calc(var(--item-index, 0) * 0.05s);
     }
     
-    /* Print-friendly adjustments */
-    @media print {
-        body {
-            background-color: white !important;
-            color: black !important;
-        }
-        
-        .container {
-            max-width: 100% !important;
-            padding: 0 !important;
-        }
-        
-        .shadow-lg, .shadow-xl {
-            box-shadow: none !important;
-        }
+    /* Fix for chart.js rendering in dark mode */
+    #categoryDonutChart {
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Ensure plotly charts follow system theme */
+    .js-plotly-plot .plotly .main-svg {
+        background-color: transparent !important;
+    }
+    
+    .dark .js-plotly-plot .plotly .main-svg text {
+        fill: #e2e8f0 !important;
+    }
+    
+    .dark .js-plotly-plot .plotly .bg {
+        fill: rgba(31, 41, 55, 0.4) !important;
+    }
+    
+    .dark .js-plotly-plot .plotly .bg rect.bg {
+        fill: transparent !important;
+    }
+    
+    .dark .js-plotly-plot .plotly .xaxis .xtick text,
+    .dark .js-plotly-plot .plotly .yaxis .ytick text {
+        fill: #e2e8f0 !important;
+    }
+    
+    .dark .js-plotly-plot .plotly .xaxis path,
+    .dark .js-plotly-plot .plotly .yaxis path {
+        stroke: rgba(226, 232, 240, 0.3) !important;
+    }
+    
+    .dark .js-plotly-plot .plotly .xaxis .xtick,
+    .dark .js-plotly-plot .plotly .yaxis .ytick {
+        stroke: rgba(226, 232, 240, 0.3) !important;
+    }
+    
+    .dark .js-plotly-plot .plotly .gridlayer path {
+        stroke: rgba(226, 232, 240, 0.1) !important;
+    }
+    
+    .dark .js-plotly-plot .plotly .legendtext {
+        fill: #e2e8f0 !important;
+    }
+    
+    .dark .js-plotly-plot .plotly .legendtoggle {
+        fill: #e2e8f0 !important;
+    }
+    
+    .dark .js-plotly-plot .plotly .modebar-group .modebar-btn path {
+        fill: #e2e8f0 !important;
     }
 </style>
 {% endblock content %}

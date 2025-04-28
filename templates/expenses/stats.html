@@ -4,86 +4,56 @@
 {% block content %}
 <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Header Section -->
-        <div class="flex flex-col md:flex-row justify-between items-center mb-8">
-            <!-- Breadcrumb -->
-            <nav class="flex mb-4 md:mb-0" aria-label="Breadcrumb">
-                <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                    <li class="inline-flex items-center">
-                        <a href="" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
-                            <svg class="w-3 h-3 mr-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM14 11a1 1 0 011 1v1h1a1 1 0 110 2h-1v1a1 1 0 11-2 0v-1h-1a1 1 0 110-2h1v-1a1 1 0 011-1z"/>
-                            </svg>
-                            Expenses Summary
-                        </a>
-                    </li>
-                    <li aria-current="page">
-                        <div class="flex items-center">
-                            <svg class="w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
-                            </svg>
-                            <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">Summary</span>
-                        </div>
-                    </li>
-                </ol>
-            </nav>
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <!-- Total Expenses Card -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Total Expenses</h3>
+                <p class="text-2xl font-bold text-gray-900">₹{{ total_expenses|floatformat:2 }}</p>
+            </div>
+            
+            <!-- Monthly Average Card -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Monthly Average</h3>
+                <p class="text-2xl font-bold text-gray-900">₹{{ monthly_average|floatformat:2 }}</p>
+            </div>
 
-            <!-- Back Button -->
-            <a href="/" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                </svg>
-                Back
-            </a>
+            <!-- Date Range Selector -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Time Period</h3>
+                <form method="GET">
+                    <select name="date_range" onchange="this.form.submit()" class="block w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <option value="7" {% if date_range == '7' %}selected{% endif %}>Last 7 days</option>
+                        <option value="30" {% if date_range == '30' %}selected{% endif %}>Last 30 days</option>
+                        <option value="90" {% if date_range == '90' %}selected{% endif %}>Last 3 months</option>
+                        <option value="365" {% if date_range == '365' %}selected{% endif %}>Last year</option>
+                    </select>
+                </form>
+            </div>
         </div>
 
-        <!-- Chart Section -->
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Chart Area -->
-                <div class="lg:col-span-2">
-                    <canvas id="myChart" class="w-full" height="400"></canvas>
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Category Chart -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Expenses by Category</h3>
+                <div class="relative" style="height: 400px;">
+                    <canvas id="categoryChart"></canvas>
                 </div>
-                
-                <!-- Stats/Legend Area -->
-                <div class="lg:col-span-1">
-                    <div class="bg-gray-50 rounded-lg p-4">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Summary Statistics</h3>
-                        <!-- Total Expenses Card -->
-                        <div class="bg-white rounded-lg p-4 mb-4 shadow-sm">
-                            <h4 class="text-sm font-medium text-gray-500">Total Expenses</h4>
-                            <p class="text-2xl font-bold text-gray-900">₹{{ total_expenses|floatformat:2 }}</p>
-                        </div>
-                        
-                        <!-- Average Monthly Expenses Card -->
-                        <div class="bg-white rounded-lg p-4 mb-4 shadow-sm">
-                            <h4 class="text-sm font-medium text-gray-500">Monthly Average</h4>
-                            <p class="text-2xl font-bold text-gray-900">₹{{ monthly_average|floatformat:2 }}</p>
-                        </div>
-
-                        <!-- Top Categories -->
-                        <div class="bg-white rounded-lg p-4 mb-4 shadow-sm">
-                            <h4 class="text-sm font-medium text-gray-500 mb-2">Top Categories</h4>
-                            <div class="space-y-2">
-                                {% for category in top_categories %}
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm text-gray-600">{{ category.name }}</span>
-                                    <span class="text-sm font-medium">₹{{ category.total|floatformat:2 }}</span>
-                                </div>
-                                {% empty %}
-                                <p class="text-sm text-gray-500">No categories found</p>
-                                {% endfor %}
-                            </div>
-                        </div>
-                        <div id="chartLegend" class="space-y-2">
-                            <!-- Legend will be populated by JavaScript -->
-                        </div>
-                    </div>
+            </div>
+            
+            <!-- Spent By Chart -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Expenses by Spender</h3>
+                <div class="relative" style="height: 400px;">
+                    <canvas id="spentByChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Loading the latest Chart.js version -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 <script src="{% static 'js/stats.js' %}"></script>
-{% endblock content %}
+{% endblock %}

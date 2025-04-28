@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-#e(g$@-wfcc07s^4avvl4ls)fx1uo-3p=gp9ol5w5g(!0k*0r4
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -52,8 +52,6 @@ INSTALLED_APPS = [
     'userprofile',
     'report_generation',
     'finassist'
-
-
 ]
 
 MIDDLEWARE = [
@@ -102,7 +100,6 @@ DATABASES = {
         'PORT': '5432',                   # ← standard Postgres port
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -159,6 +156,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'tanmay.lad.india@gmail.com'
 EMAIL_HOST_PASSWORD = 'bnthukrwimkrtplz'
 DEFAULT_FROM_EMAIL = 'tanmay.lad.india@gmail.com'
+
 
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'

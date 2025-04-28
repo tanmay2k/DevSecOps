@@ -23,8 +23,6 @@ searchField.addEventListener("keyup", (e) => {
         appTable.style.display = "none";
         tableOutput.style.display = "block";
 
-        console.log("data.length", data.length);
-
         if (data.length === 0) {
           noResults.style.display = "block";
           tableOutput.style.display = "none";
@@ -32,11 +30,15 @@ searchField.addEventListener("keyup", (e) => {
           noResults.style.display = "none";
           data.forEach((item) => {
             tbody.innerHTML += `
-                <tr>
-                <td>${item.amount}</td>
-                <td>${item.category}</td>
-                <td>${item.description}</td>
-                <td>${item.date}</td>
+                <tr class="bg-white border-b hover:bg-gray-50">
+                    <td class="px-6 py-4 font-medium text-gray-900">${item.amount}</td>
+                    <td class="px-6 py-4">${item.category}</td>
+                    <td class="px-6 py-4">${item.description}</td>
+                    <td class="px-6 py-4">${item.date}</td>
+                    <td class="px-6 py-4">${item.spent_by}</td>
+                    <td class="px-6 py-4">
+                        <a href="expense-edit/${item.id}" class="font-medium text-blue-600 hover:text-blue-800">Edit</a>
+                    </td>
                 </tr>`;
           });
         }

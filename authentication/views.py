@@ -14,8 +14,12 @@ from .utils import account_activation_token
 from django.db import transaction
 from django.contrib import auth
 from django.contrib.auth.decorators import login_required
-# Create your views here.
+from .forms import LoginForm
+from django import forms
+from userprofile.forms import AccountTypeForm
+from userprofile.models import Profile
 
+# Create your views here.
 
 class EmailValidationView(View):
     def post(self, request):
@@ -41,15 +45,20 @@ class UsernameValidationView(View):
 
 class RegistrationView(View):
     def get(self, request):
-        return render(request, 'authentication/register.html')
+        account_form = AccountTypeForm()
+        return render(request, 'authentication/register.html', {'account_form': account_form})
 
     def post(self, request):
         username = request.POST['username']
         email = request.POST['email']
         password = request.POST['password']
+        account_type = request.POST.get('account_type', 'SOLO')
+        
         context = {
-            'fieldValues': request.POST
+            'fieldValues': request.POST,
+            'account_form': AccountTypeForm(request.POST)
         }
+        
         try:
             with transaction.atomic():
                 if not User.objects.filter(username=username).exists():
@@ -57,11 +66,19 @@ class RegistrationView(View):
                         if len(password) < 6:
                             messages.error(request, 'Password too short')
                             return render(request, 'authentication/register.html', context)
-                        user = User.objects.create_user(
-                            username=username, email=email)
+                        
+                        user = User.objects.create_user(username=username, email=email)
                         user.set_password(password)
                         user.is_active = False
                         user.save()
+
+                        # Create user profile
+                        profile = Profile.objects.create(
+                            user=user,
+                            account_type=account_type,
+                            profile_type='OWNER'
+                        )
+                        
                         email_subject = "Activate Your account"
                         uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
                         domain = get_current_site(request).domain
@@ -78,11 +95,11 @@ class RegistrationView(View):
                             [email],
                         )
                         email.send(fail_silently=False)
-                        messages.success(
-                            request, 'Account created successfully. An email with activation link has been sent to your email.')
-                    return render(request, 'authentication/register.html')
+                        messages.success(request, 'Account created successfully. An email with activation link has been sent to your email.')
+                        return render(request, 'authentication/register.html')
+
         except Exception as e:
-            messages.error(request, "Error Occured : "+str(e))
+            messages.error(request, "Error Occurred : "+str(e))
         return render(request, 'authentication/register.html', context)
 
 
@@ -140,3 +157,13 @@ class LogoutView(View):
             return redirect('login')
         else:
             return redirect('login')
+
+
+def login_view(request):
+    form = LoginForm()
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            # Handle login logic here
+            pass
+    return render(request, 'authentication/login.html', {'form': form})
