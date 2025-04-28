@@ -12,7 +12,7 @@ from django.template.loader import render_to_string
 
 client = OpenAI(
 	base_url="https://api-inference.huggingface.co/v1/",
-    api_key="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",
+    api_key="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",
 )
 
 # Function to get additional context
