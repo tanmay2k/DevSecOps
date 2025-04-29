@@ -2,6 +2,12 @@
 {% load static %}
 
 {% block content %}
+<!-- Include Chart.js for donut chart -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+
+<!-- Include Plotly.js for the main forecast visualization -->
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+
 <div class="min-h-screen py-6">
     <!-- Main Content -->
     <div class="container mx-auto px-4 relative z-20">
@@ -691,9 +697,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-
-<!-- Include Chart.js for donut chart -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 
 <!-- Add custom styles for transitions and theme compatibility -->
 <style>
