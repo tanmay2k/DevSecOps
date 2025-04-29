@@ -140,11 +140,15 @@ def get_expense_of_day(user):
 def add_expense(request):
     categories = Category.objects.all()
     spent_by_choices = Expense.get_spent_by_choices(request.user)
+    payment_method_choices = Expense.PAYMENT_METHOD_CHOICES
+    transaction_category_choices = Expense.TRANSACTION_CATEGORY_CHOICES
     
     context = {
         'categories': categories,
         'values': request.POST,
-        'spent_by_choices': spent_by_choices
+        'spent_by_choices': spent_by_choices,
+        'payment_method_choices': payment_method_choices,
+        'transaction_category_choices': transaction_category_choices
     }
 
     if request.method == 'GET':
@@ -156,6 +160,8 @@ def add_expense(request):
         category = request.POST['category']
         date = request.POST.get('expense_date', timezone.now)
         spent_by = request.POST.get('spent_by', 'Self')
+        payment_method = request.POST.get('payment_method', 'CASH')
+        transaction_category = request.POST.get('transaction_category', 'OTHER')
 
         if not amount:
             messages.error(request, 'Amount is required')
@@ -165,14 +171,16 @@ def add_expense(request):
             messages.error(request, 'Description is required')
             return render(request, 'expenses/add_expense.html', context)
 
-        # Create expense with dynamic spent_by value
+        # Create expense with all fields
         expense = Expense.objects.create(
             amount=amount,
             date=date,
             category=category,
             description=description,
             owner=request.user,
-            spent_by=spent_by
+            spent_by=spent_by,
+            payment_method=payment_method,
+            transaction_category=transaction_category
         )
         
         messages.success(request, 'Expense saved successfully')
@@ -183,12 +191,16 @@ def expense_edit(request, id):
     expense = Expense.objects.get(pk=id)
     categories = Category.objects.all()
     spent_by_choices = Expense.get_spent_by_choices(request.user)
+    payment_method_choices = Expense.PAYMENT_METHOD_CHOICES
+    transaction_category_choices = Expense.TRANSACTION_CATEGORY_CHOICES
     
     context = {
         'expense': expense,
         'values': expense,
         'categories': categories,
-        'spent_by_choices': spent_by_choices
+        'spent_by_choices': spent_by_choices,
+        'payment_method_choices': payment_method_choices,
+        'transaction_category_choices': transaction_category_choices
     }
 
     if request.method == 'GET':
@@ -200,6 +212,8 @@ def expense_edit(request, id):
         category = request.POST['category']
         date_str = request.POST.get('expense_date')
         spent_by = request.POST.get('spent_by', 'Self')
+        payment_method = request.POST.get('payment_method', expense.payment_method)
+        transaction_category = request.POST.get('transaction_category', expense.transaction_category)
 
         if not amount:
             messages.error(request, 'Amount is required')
@@ -223,6 +237,8 @@ def expense_edit(request, id):
             expense.category = category
             expense.description = description
             expense.spent_by = spent_by
+            expense.payment_method = payment_method
+            expense.transaction_category = transaction_category
 
             expense.save()
             messages.success(request, 'Expense updated successfully')
@@ -246,15 +262,25 @@ def expense_category_summary(request):
                                       date__gte=six_months_ago, date__lte=todays_date)
     finalrep = {}
     spent_by_rep = {}
+    payment_method_rep = {}
+    transaction_category_rep = {}
 
     def get_category(expense):
         return expense.category
     
     def get_spent_by(expense):
         return expense.spent_by
+        
+    def get_payment_method(expense):
+        return expense.payment_method
+        
+    def get_transaction_category(expense):
+        return expense.transaction_category
 
     category_list = list(set(map(get_category, expenses)))
     spent_by_list = list(set(map(get_spent_by, expenses)))
+    payment_method_list = list(set(map(get_payment_method, expenses)))
+    transaction_category_list = list(set(map(get_transaction_category, expenses)))
 
     def get_expense_category_amount(category):
         amount = 0
@@ -269,16 +295,44 @@ def expense_category_summary(request):
         for item in filtered_by_spent:
             amount += item.amount
         return amount
+        
+    def get_expense_payment_method_amount(payment_method):
+        amount = 0
+        filtered_by_payment = expenses.filter(payment_method=payment_method)
+        for item in filtered_by_payment:
+            amount += item.amount
+        return amount
+        
+    def get_expense_transaction_category_amount(transaction_category):
+        amount = 0
+        filtered_by_transaction = expenses.filter(transaction_category=transaction_category)
+        for item in filtered_by_transaction:
+            amount += item.amount
+        return amount
 
+    # Get display names for the payment methods and transaction categories
+    payment_method_display = {code: label for code, label in Expense.PAYMENT_METHOD_CHOICES}
+    transaction_category_display = {code: label for code, label in Expense.TRANSACTION_CATEGORY_CHOICES}
+    
     for y in category_list:
         finalrep[y] = get_expense_category_amount(y)
     
     for y in spent_by_list:
         spent_by_rep[y] = get_expense_spent_by_amount(y)
+        
+    for y in payment_method_list:
+        display_name = payment_method_display.get(y, y)
+        payment_method_rep[display_name] = get_expense_payment_method_amount(y)
+        
+    for y in transaction_category_list:
+        display_name = transaction_category_display.get(y, y)
+        transaction_category_rep[display_name] = get_expense_transaction_category_amount(y)
 
     return JsonResponse({
         'expense_category_data': finalrep,
-        'expense_spent_by_data': spent_by_rep
+        'expense_spent_by_data': spent_by_rep,
+        'payment_method_data': payment_method_rep,
+        'transaction_category_data': transaction_category_rep
     }, safe=False)
 
 @login_required(login_url='/authentication/login')
@@ -308,12 +362,50 @@ def stats_view(request):
     except (ZeroDivisionError, TypeError):
         monthly_average = 0.00
     
+    # Get demographic data if available
+    try:
+        user_profile = request.user.profile
+        demographics = {
+            'gender': user_profile.get_gender_display(),
+            'age': calculate_age(user_profile.date_of_birth) if user_profile.date_of_birth else None,
+        }
+    except:
+        demographics = {'gender': None, 'age': None}
+    
     # Get top categories (handle empty case)
     top_categories = expenses.values('category')\
         .annotate(total=Sum('amount'))\
         .order_by('-total')[:5]
     
-    # Prepare chart data
+    # Get payment method analysis
+    payment_methods = expenses.values('payment_method')\
+        .annotate(total=Sum('amount'))\
+        .order_by('-total')
+    
+    # Get transaction category analysis
+    transaction_categories = expenses.values('transaction_category')\
+        .annotate(total=Sum('amount'))\
+        .order_by('-total')
+    
+    # Convert code values to display values
+    payment_method_display = {code: label for code, label in Expense.PAYMENT_METHOD_CHOICES}
+    transaction_category_display = {code: label for code, label in Expense.TRANSACTION_CATEGORY_CHOICES}
+    
+    formatted_payment_methods = []
+    for pm in payment_methods:
+        formatted_payment_methods.append({
+            'name': payment_method_display.get(pm['payment_method'], pm['payment_method']),
+            'total': pm['total'] or 0
+        })
+    
+    formatted_transaction_categories = []
+    for tc in transaction_categories:
+        formatted_transaction_categories.append({
+            'name': transaction_category_display.get(tc['transaction_category'], tc['transaction_category']),
+            'total': tc['total'] or 0
+        })
+    
+    # Prepare chart data for categories
     categories = []
     amounts = []
     
@@ -333,6 +425,46 @@ def stats_view(request):
         }]
     }
     
+    # Prepare chart data for payment methods
+    payment_labels = []
+    payment_amounts = []
+    
+    for pm in formatted_payment_methods[:5]:  # Top 5 payment methods
+        payment_labels.append(pm['name'])
+        payment_amounts.append(float(pm['total']))
+    
+    payment_chart_data = {
+        'labels': payment_labels,
+        'datasets': [{
+            'label': 'Expenses by Payment Method',
+            'data': payment_amounts,
+            'backgroundColor': [
+                '#8b5cf6', '#ec4899', '#3b82f6', 
+                '#10b981', '#f59e0b'
+            ]
+        }]
+    }
+    
+    # Prepare chart data for transaction categories
+    transaction_labels = []
+    transaction_amounts = []
+    
+    for tc in formatted_transaction_categories[:5]:  # Top 5 transaction categories
+        transaction_labels.append(tc['name'])
+        transaction_amounts.append(float(tc['total']))
+    
+    transaction_chart_data = {
+        'labels': transaction_labels,
+        'datasets': [{
+            'label': 'Expenses by Transaction Category',
+            'data': transaction_amounts,
+            'backgroundColor': [
+                '#6366f1', '#14b8a6', '#f97316',
+                '#8b5cf6', '#06b6d4'
+            ]
+        }]
+    }
+    
     context = {
         'total_expenses': total_expenses,
         'monthly_average': round(monthly_average, 2),
@@ -340,11 +472,25 @@ def stats_view(request):
             {'name': cat['category'], 'total': cat['total'] or 0} 
             for cat in top_categories
         ],
+        'payment_methods': formatted_payment_methods,
+        'transaction_categories': formatted_transaction_categories,
+        'demographics': demographics,
         'date_range': date_range,
-        'chart_data': json.dumps(chart_data)
+        'chart_data': json.dumps(chart_data),
+        'payment_chart_data': json.dumps(payment_chart_data),
+        'transaction_chart_data': json.dumps(transaction_chart_data)
     }
     
     return render(request, 'expenses/stats.html', context)
+
+def calculate_age(birth_date):
+    """Calculate age from birth date"""
+    if not birth_date:
+        return None
+    
+    today = date.today()
+    age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+    return age
 
 @login_required(login_url='/authentication/login')
 def predict_category(description):

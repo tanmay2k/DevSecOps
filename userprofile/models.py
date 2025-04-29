@@ -2,29 +2,28 @@ from django.db import models
 from django.contrib.auth.models import User
 
 class Profile(models.Model):
-    ACCOUNT_TYPE_CHOICES = [
-        ('SOLO', 'Solo Account'),
-        ('MULTI', 'Multi-User Account'),
-    ]
-
-    PROFILE_TYPE_CHOICES = [
+    PROFILE_TYPES = [
         ('OWNER', 'Account Owner'),
         ('MEMBER', 'Family Member'),
     ]
+    
+    GENDER_CHOICES = [
+        ('MALE', 'Male'),
+        ('FEMALE', 'Female'),
+        ('OTHER', 'Other'),
+        ('PREFER_NOT_TO_SAY', 'Prefer not to say'),
+    ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    account_type = models.CharField(max_length=5, choices=ACCOUNT_TYPE_CHOICES, default='SOLO')
-    profile_type = models.CharField(max_length=6, choices=PROFILE_TYPE_CHOICES, default='OWNER')
+    profile_type = models.CharField(max_length=10, choices=PROFILE_TYPES, default='OWNER')
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='family_members', null=True, blank=True)
-    relationship = models.CharField(max_length=50, blank=True, null=True, help_text='Relationship to account owner')
-    
+    relationship = models.CharField(max_length=50, blank=True)
+    account_type = models.CharField(max_length=10, default='SINGLE')
+    date_of_birth = models.DateField(null=True, blank=True)
+    gender = models.CharField(max_length=20, choices=GENDER_CHOICES, default='PREFER_NOT_TO_SAY')
+
     def __str__(self):
-        if self.profile_type == 'OWNER':
-            return f"{self.user.username}'s Profile (Owner)"
-        return f"{self.user.username}'s Profile ({self.relationship})"
+        return self.user.username
 
     def is_owner(self):
-        return self.profile_type == 'OWNER'
-
-    def can_view_all_data(self):
         return self.profile_type == 'OWNER'

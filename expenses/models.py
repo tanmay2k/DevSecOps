@@ -11,6 +11,29 @@ class Expense(models.Model):
         ('MONTHLY', 'Monthly'),
         ('YEARLY', 'Yearly'),
     ]
+    
+    PAYMENT_METHOD_CHOICES = [
+        ('CASH', 'Cash'),
+        ('CREDIT_CARD', 'Credit Card'),
+        ('DEBIT_CARD', 'Debit Card'),
+        ('UPI', 'UPI'),
+        ('NET_BANKING', 'Net Banking'),
+        ('PAYAPP', 'Payment App'),
+        ('WALLET', 'Digital Wallet'),
+        ('OTHER', 'Other'),
+    ]
+    
+    TRANSACTION_CATEGORY_CHOICES = [
+        ('OFFLINE_MARKET', 'Offline Market'),
+        ('ECOMMERCE', 'E-Commerce'),
+        ('QUICK_COMMERCE', 'Quick Commerce'),
+        ('MALL', 'Shopping Mall'),
+        ('UTILITY', 'Utility Payment'),
+        ('SUBSCRIPTION', 'Subscription'),
+        ('RESTAURANT', 'Restaurant'),
+        ('TRAVEL', 'Travel'),
+        ('OTHER', 'Other'),
+    ]
 
     amount = models.FloatField()
     date = models.DateField(default=now)
@@ -20,6 +43,8 @@ class Expense(models.Model):
     is_recurring = models.CharField(max_length=10, choices=RECURRING_CHOICES, default='NO')
     recurring_end_date = models.DateField(null=True, blank=True)
     spent_by = models.CharField(max_length=50)  # Removed choices to make it dynamic
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, default='CASH')
+    transaction_category = models.CharField(max_length=20, choices=TRANSACTION_CATEGORY_CHOICES, default='OTHER')
 
     def __str__(self):
         return self.category

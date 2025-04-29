@@ -24,7 +24,7 @@ class Command(BaseCommand):
             return
             
         if use_input:
-            # Use the CSV data provided in the input
+            # Use the CSV data provided in the input with seasonality patterns
             csv_data = """amount,date,description,category
 178.50,2025-01-01,Train ticket to Mumbai,Transportation
 45.25,2025-01-01,Breakfast coffee and sandwich,Food & Beverage
@@ -115,8 +115,8 @@ class Command(BaseCommand):
 345.80,2025-02-13,Family dinner outing,Dining
 495.40,2025-02-13,Weekly grocery shopping,Groceries
 68.90,2025-02-14,Shopping mall parking,Transportation
-125.60,2025-02-14,Metro smart card top-up,Transportation
-45.30,2025-02-15,Vehicle oil change,Transportation
+1425.60,2025-02-14,Valentine's Day special dinner,Dining
+1245.30,2025-02-14,Valentine's Day gift package,Shopping
 195.80,2025-02-15,Pilates monthly subscription,Fitness
 235.60,2025-02-16,General physician consultation,Health
 165.40,2025-02-16,Medical test fees,Health
@@ -151,8 +151,8 @@ class Command(BaseCommand):
 185.30,2025-03-03,Train ticket to Kolkata,Transportation
 48.90,2025-03-03,Morning coffee and pastry,Food & Beverage
 265.40,2025-03-04,Grocery shopping at D-Mart,Groceries
-102.80,2025-03-04,March electricity bill,Utilities
-1380.50,2025-03-05,Spring collection dress,Shopping
+142.80,2025-03-04,March electricity bill (increased due to spring),Utilities
+1680.50,2025-03-05,Spring collection dress,Shopping
 58.90,2025-03-05,Daily office parking,Transportation
 415.75,2025-03-06,Annual medical insurance co-pay,Health
 88.60,2025-03-06,Mobile internet plan,Utilities
@@ -166,46 +166,105 @@ class Command(BaseCommand):
 125.40,2025-03-10,Vegetables and fruits,Groceries
 355.80,2025-03-11,Pharmacy purchase,Health
 205.40,2025-03-11,Concert tickets,Entertainment
-475.90,2025-03-12,Office team lunch,Food & Beverage
+525.90,2025-03-12,Office team lunch (increased for special event),Food & Beverage
 75.60,2025-03-12,Highway toll charges,Transportation
 135.80,2025-03-13,Weekly bread and dairy,Groceries
-865.30,2025-03-13,Spring wardrobe update,Shopping
+1265.30,2025-03-13,Spring wardrobe update (seasonal increase),Shopping
 45.60,2025-03-14,Water utility bill,Utilities
-265.40,2025-03-14,Spa treatment,Personal Care
+295.40,2025-03-14,Spa treatment,Personal Care
 65.30,2025-03-15,Electric scooter maintenance,Transportation
-215.40,2025-03-15,Seasonal fruits shopping,Groceries
+315.40,2025-03-15,Seasonal fruits shopping (spring produce increase),Groceries
 535.80,2025-03-16,ENT specialist consultation,Health
 115.40,2025-03-16,Music subscription annual plan,Entertainment
-425.90,2025-03-17,Weekend brunch with family,Food & Beverage
+525.90,2025-03-17,St. Patrick's Day celebration,Food & Beverage
 85.60,2025-03-17,Rideshare to airport,Transportation
 165.40,2025-03-18,Home cleaning supplies,Household
-795.80,2025-03-18,Air purifier purchase,Household
+895.80,2025-03-18,Spring cleaning service,Household
 35.60,2025-03-19,Local train tickets,Transportation
 525.40,2025-03-19,Dental check-up and cleaning,Health
 405.90,2025-03-20,Monthly parking facility fee,Transportation
-365.40,2025-03-20,Car fuel fill-up,Transportation
-115.80,2025-03-21,Fitness class package,Fitness
+465.40,2025-03-20,Car fuel fill-up (seasonal travel increase),Transportation
+215.80,2025-03-21,Fitness class package (spring fitness resolution),Fitness
 118.90,2025-03-21,Diesel purchase for generator,Transportation
 52.40,2025-03-22,Metro card top-up,Transportation
 485.60,2025-03-22,Home internet monthly bill,Utilities
-355.40,2025-03-23,Weekly grocery shopping,Groceries
-415.80,2025-03-23,Dinner at new fusion restaurant,Dining
+455.40,2025-03-23,Weekly grocery shopping (increased for spring parties),Groceries
+515.80,2025-03-23,Dinner at new fusion restaurant,Dining
 32.50,2025-03-24,Prepaid mobile recharge,Utilities
-535.60,2025-03-24,Theater festival tickets,Entertainment
-475.40,2025-03-25,3D movie premiere tickets,Entertainment
-138.90,2025-03-25,Vehicle refueling,Transportation
+635.60,2025-03-24,Theater festival tickets (spring cultural events),Entertainment
+575.40,2025-03-25,3D movie premiere tickets (spring blockbuster),Entertainment
+158.90,2025-03-25,Vehicle refueling,Transportation
 1285.60,2025-03-26,Vehicle insurance renewal,Transportation
 125.40,2025-03-26,April rent deposit,Housing
 195.80,2025-03-27,Motorcycle servicing,Transportation
 315.40,2025-03-27,Prescription medication refill,Health
 255.80,2025-03-28,Quarterly train pass renewal,Transportation
 185.60,2025-03-28,Online course subscription,Entertainment
-355.40,2025-03-29,Business casual attire,Shopping
+455.40,2025-03-29,Business casual attire (spring collection),Shopping
 98.70,2025-03-29,Professional car cleaning,Transportation
-195.40,2025-03-30,Dinner with old friends,Dining
-225.80,2025-03-30,Spring collection accessories,Shopping
-265.90,2025-03-31,Train ticket to Chennai,Transportation
-445.60,2025-03-31,Designer watch purchase,Shopping"""
+295.40,2025-03-30,Dinner with old friends,Dining
+325.80,2025-03-30,Spring collection accessories,Shopping
+365.90,2025-03-31,Train ticket to Chennai (holiday travel increase),Transportation
+545.60,2025-03-31,Designer watch purchase,Shopping
+212.45,2025-04-01,Weekly groceries (price increase),Groceries
+432.90,2025-04-01,Spring festival tickets,Entertainment
+165.30,2025-04-02,Electricity bill April,Utilities
+1750.60,2025-04-03,Summer wardrobe shopping,Shopping
+65.40,2025-04-03,Daily commute expenses,Transportation
+425.90,2025-04-04,Quarterly health check-up,Health
+95.80,2025-04-04,Mobile data plan renewal,Utilities
+710.30,2025-04-05,Family dinner (special spring menu),Dining
+25.40,2025-04-05,Metro transit card top-up,Transportation
+62.80,2025-04-06,Office snacks and refreshments,Groceries
+29500.00,2025-04-06,April apartment rent (seasonal increase),Housing
+82.70,2025-04-07,Mobile phone bill,Utilities
+295.60,2025-04-07,New fiction books collection,Entertainment
+75.30,2025-04-08,Taxi to business meeting,Transportation
+135.45,2025-04-08,Fresh seasonal produce,Groceries
+392.20,2025-04-09,Seasonal allergy medication,Health
+255.75,2025-04-09,Weekend concert tickets,Entertainment
+495.30,2025-04-10,Team building lunch,Food & Beverage
+82.45,2025-04-10,Highway toll payment,Transportation
+145.60,2025-04-11,Premium dairy products,Groceries
+945.75,2025-04-11,Summer accessory shopping,Shopping
+52.30,2025-04-12,Water bill payment,Utilities
+280.00,2025-04-12,Spring salon makeover,Personal Care
+72.50,2025-04-13,Vehicle maintenance,Transportation
+255.75,2025-04-13,Fresh vegetables and fruits (seasonal),Groceries
+580.30,2025-04-14,Annual eye checkup,Health
+135.90,2025-04-14,Gaming subscription renewal,Entertainment
+515.25,2025-04-15,Easter holiday brunch,Food & Beverage
+92.40,2025-04-15,Airport transportation,Transportation
+210.30,2025-04-16,Spring cleaning supplies,Household
+890.50,2025-04-16,Patio furniture (seasonal),Household
+42.45,2025-04-17,Local transportation,Transportation
+595.90,2025-04-17,Dermatologist consultation,Health
+425.80,2025-04-18,Monthly parking pass renewal,Transportation
+375.60,2025-04-18,Fuel for extended weekend travel,Transportation
+155.40,2025-04-19,Yoga retreat (spring special),Fitness
+132.30,2025-04-19,Generator maintenance,Transportation
+60.75,2025-04-20,Metro card recharge,Transportation
+495.90,2025-04-20,Internet bill payment,Utilities
+380.80,2025-04-21,Grocery shopping for Easter weekend,Groceries
+458.50,2025-04-21,Dinner at Italian restaurant,Dining
+38.45,2025-04-22,Mobile recharge,Utilities
+625.75,2025-04-22,Spring festival tickets,Entertainment
+555.30,2025-04-23,Outdoor movie event tickets,Entertainment
+155.60,2025-04-23,Car refueling,Transportation
+215.40,2025-04-24,Vehicle service package,Transportation
+145.25,2025-04-24,May rent advance,Housing
+215.40,2025-04-25,Bicycle seasonal maintenance,Transportation
+345.80,2025-04-25,Seasonal health supplements,Health
+285.75,2025-04-26,Monthly transit pass,Transportation
+195.30,2025-04-26,Digital subscription renewal,Entertainment
+450.60,2025-04-27,Summer casual wear,Shopping
+115.40,2025-04-27,Vehicle detailing service,Transportation
+215.30,2025-04-28,Dinner with colleagues,Dining
+255.75,2025-04-28,Summer hat and accessories,Shopping
+295.40,2025-04-29,Train ticket for holiday weekend,Transportation
+485.90,2025-04-29,Designer summer clothing,Shopping
+175.60,2025-04-30,Outdoor dining experience,Dining
+345.40,2025-04-30,Monthly grocery stock-up,Groceries"""
             csv_file = io.StringIO(csv_data)
         else:
             # Use a file from the filesystem

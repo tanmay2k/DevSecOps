@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
 from userincome.models import Source
-from .forms import User_Profile, FamilyMemberProfileForm
+from .forms import User_Profile, FamilyMemberProfileForm, DemographicProfileForm
 from .models import Profile
 
 @login_required(login_url='/authentication/login')
@@ -20,21 +20,66 @@ def userprofile(request):
         family_members = Profile.objects.filter(owner=request.user)
     
     if request.method == "POST":
-        form = User_Profile(data=request.POST, instance=request.user)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Profile Updated Successfully!!')
+        if 'update_profile' in request.POST:
+            form = User_Profile(data=request.POST, instance=request.user)
+            demographic_form = DemographicProfileForm(data=request.POST, instance=profile)
+            
+            if form.is_valid() and demographic_form.is_valid():
+                form.save()
+                demographic_form.save()
+                messages.success(request, 'Profile Updated Successfully!!')
+            else:
+                # If either form is invalid, prepare error messages
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        messages.error(request, f"Error in {field}: {error}")
+                for field, errors in demographic_form.errors.items():
+                    for error in errors:
+                        messages.error(request, f"Error in {field}: {error}")
+        else:
+            form = User_Profile(instance=request.user)
+            demographic_form = DemographicProfileForm(instance=profile)
     else:
         form = User_Profile(instance=request.user)
+        demographic_form = DemographicProfileForm(instance=profile)
     
     context = {
         'form': form,
+        'demographic_form': demographic_form,
         'sources': Sources,
         'profile': profile,
         'family_members': family_members,
         'family_member_form': FamilyMemberProfileForm()
     }
     return render(request, 'userprofile/profile.html', context)
+
+@login_required(login_url='/authentication/login')
+def update_demographics(request):
+    if request.method == "POST":
+        try:
+            profile = request.user.profile
+            form = DemographicProfileForm(data=request.POST, instance=profile)
+            
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Demographic information updated successfully!')
+            else:
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        messages.error(request, f"Error in {field}: {error}")
+        except Profile.DoesNotExist:
+            profile = Profile.objects.create(user=request.user, account_type='SOLO', profile_type='OWNER')
+            form = DemographicProfileForm(data=request.POST, instance=profile)
+            
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Demographic information saved successfully!')
+            else:
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        messages.error(request, f"Error in {field}: {error}")
+    
+    return redirect('account')
 
 @login_required(login_url='/authentication/login')
 def add_family_member(request):
