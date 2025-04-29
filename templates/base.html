@@ -18,37 +18,71 @@
     {% block extra_css %}{% endblock %}
 
     <style>
-        /* Hide scrollbar */
+        /* Improved scrollbar */
         ::-webkit-scrollbar {
-            width: 0px;
-            background: transparent;
+            width: 8px;
+            height: 8px;
         }
         
-        * {
-            scrollbar-width: none;
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        /* Sidebar styles */
+        .sidebar {
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 40;
+            transition: all 0.3s ease-in-out;
+            overflow-y: auto;
         }
         
         .sidebar-collapsed {
-            width: 5rem;
+            width: 4.5rem;
         }
         
         .sidebar-expanded {
             width: 16rem;
         }
         
-        .content-expanded {
-            margin-left: 16rem;
+        .content {
+            transition: margin-left 0.3s ease-in-out;
         }
         
         .content-collapsed {
-            margin-left: 5rem;
+            margin-left: 4.5rem;
         }
         
-        .transition-width {
-            transition: all 0.3s ease-in-out;
+        .content-expanded {
+            margin-left: 16rem;
         }
 
-        /* Dark mode styles */
+        /* Font improvements */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.5;
+            letter-spacing: 0.01em;
+        }
+        
+        /* Enhanced font contrast for dark mode */
+        .dark .text-gray-600, 
+        .dark .text-gray-700 {
+            color: #e0e0e0;
+        }
+        
+        /* Dark mode styles with improved contrast */
         .dark .bg-white {
             background-color: #1a1a1a;
             color: #ffffff;
@@ -59,7 +93,7 @@
         }
 
         .dark .text-gray-700 {
-            color: #e5e5e5;
+            color: #e0e0e0;
         }
 
         .dark .text-gray-600 {
@@ -77,161 +111,230 @@
         .dark .bg-gray-50 {
             background-color: #121212;
         }
-
-        .dark #user-dropdown {
-            background-color: #1a1a1a;
-            border-color: #2d2d2d;
+        
+        .dark .bg-gray-100 {
+            background-color: #1e1e1e;
         }
 
-        .dark #user-dropdown .text-gray-900 {
-            color: #ffffff;
+        .dark ::-webkit-scrollbar-track {
+            background: #1f2937;
         }
 
-        .dark #user-dropdown .text-gray-500 {
-            color: #a0a0a0;
+        .dark ::-webkit-scrollbar-thumb {
+            background: #4b5563;
         }
 
-        .dark #user-dropdown a:hover {
-            background-color: #2d2d2d;
+        .dark ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+        
+        /* Smooth transitions */
+        .transition-theme {
+            transition: background-color 0.3s ease, 
+                        color 0.3s ease, 
+                        border-color 0.3s ease,
+                        box-shadow 0.3s ease;
+        }
+        
+        /* Active sidebar item */
+        .sidebar-item-active {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            font-weight: 500;
+        }
+        
+        .dark .sidebar-item-active {
+            background-color: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
         }
 
-        .theme-icon {
-            transition: transform 0.3s ease;
-        }
-
-        .dark .theme-icon {
-            transform: rotate(360deg);
-        }
-
-        /* Navbar styles */
+        /* Responsive styles */
         @media (max-width: 768px) {
-            .content-expanded, .content-collapsed {
+            .content-expanded, 
+            .content-collapsed {
                 margin-left: 0;
             }
             
-            .sidebar-expanded, .sidebar-collapsed {
+            .sidebar {
                 transform: translateX(-100%);
             }
             
-            .sidebar-visible {
+            .sidebar.visible {
                 transform: translateX(0);
             }
         }
     </style>
 </head>
-<body class="bg-gray-50">
-    <nav class="bg-white border-gray-200 dark:bg-gray-900 fixed w-full z-50">
-        <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
-            <a href="{% url 'expenses' %}" class="flex items-center space-x-3">
-                <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">WealthWizard</span>
-            </a>
-            
-            <!-- Replace the profile button and dropdown section -->
-            <div class="flex items-center md:order-2 space-x-3">
-                <button id="theme-toggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
-                    <i class="fas fa-circle-half-stroke theme-icon"></i>
+<body class="bg-gray-50 dark:bg-gray-900 transition-theme">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar sidebar-expanded bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shadow-md">
+        <!-- Logo and App Title -->
+        <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <a href="{% url 'expenses' %}" class="flex items-center">
+                    <i class="fas fa-wallet text-2xl text-blue-600 dark:text-blue-400 mr-2"></i>
+                    <span id="app-title" class="text-xl font-bold text-gray-800 dark:text-white">WealthWizard</span>
+                </a>
+                <button id="toggle-sidebar" class="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none">
+                    <i class="fas fa-bars text-gray-600 dark:text-gray-400"></i>
                 </button>
-                
-                <!-- Profile dropdown button -->
-                <button type="button" 
-                        class="flex items-center justify-center w-10 h-10 text-sm rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 md:me-0" 
-                        id="user-menu-button" 
-                        aria-expanded="false" 
-                        data-dropdown-toggle="user-dropdown">
-                    <i class="fas fa-user-circle text-2xl text-gray-600 dark:text-gray-400"></i>
-                    <span class="ml-2"><b>{{request.user.username}}</b></span>
-                </button>
-                
-                <!-- Profile dropdown menu -->
-                <div class="hidden z-50 my-4 w-56 text-base list-none bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600" id="user-dropdown">
-                    <div class="px-4 py-3">
-                        <span class="block text-sm text-gray-900 dark:text-white">{{ request.user.username }}</span>
-                        <span class="block text-sm text-gray-500 truncate dark:text-gray-400">{{ request.user.email }}</span>
-                    </div>
-                    <ul class="py-2" aria-labelledby="user-menu-button">
-                        <li>
-                            <a href="{% url 'account' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">
-                                <i class="fas fa-user mr-2"></i>Account
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'preferences' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">
-                                <i class="fas fa-cog mr-2"></i>Settings
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">
-                                <i class="fas fa-sign-out-alt mr-2"></i>Sign out
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            
-                <!-- Mobile menu button -->
-                <button data-collapse-toggle="navbar-menu" type="button" class="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600" aria-controls="navbar-menu" aria-expanded="false">
-                    <span class="sr-only">Open main menu</span>
-                    <i class="fas fa-bars"></i>
-                </button>
-            </div>
-            
-            <!-- Main menu -->
-            <div class="hidden items-center justify-between w-full md:flex md:w-auto md:order-1" id="navbar-menu">
-                <ul class="flex flex-col font-medium p-4 md:p-0 mt-4 border border-gray-100 rounded-lg bg-gray-50 md:space-x-8 md:flex-row md:mt-0 md:border-0 md:bg-white dark:bg-gray-800 md:dark:bg-gray-900 dark:border-gray-700">
-                    <!-- Dashboard Section -->
-                    <li>
-                        <button id="dashboard-dropdown" data-dropdown-toggle="dashboard-menu" class="flex items-center py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700">
-                            <i class="fas fa-chart-line mr-2"></i>Dashboard <i class="fas fa-chevron-down ml-2"></i>
-                        </button>
-                        <div id="dashboard-menu" class="hidden z-10 bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700">
-                            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
-                                <li><a href="{% url 'expenses' %}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600"><i class="fas fa-money-bill mr-2"></i>Expenses</a></li>
-                                <li><a href="{% url 'income' %}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600"><i class="fas fa-plus-circle mr-2"></i>Income</a></li>
-                                <li><a href="{% url 'forecast' %}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600"><i class="fas fa-chart-line mr-2"></i>Forecast</a></li>
-                                <li><a href="{% url 'chatbot' %}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600"><i class="fas fa-comments mr-2"></i>Ask for Advice</a></li>
-                            </ul>
-                        </div>
-                    </li>
-
-                    <!-- Summary Section -->
-                    <li>
-                        <button id="summary-dropdown" data-dropdown-toggle="summary-menu" class="flex items-center py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700">
-                            <i class="fas fa-chart-pie mr-2"></i>Summary <i class="fas fa-chevron-down ml-2"></i>
-                        </button>
-                        <div id="summary-menu" class="hidden z-10 bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700">
-                            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
-                                <li><a href="{% url 'stats' %}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600"><i class="fas fa-chart-pie mr-2"></i>Expense Summary</a></li>
-                                <li><a href="{% url 'income-summary' %}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600"><i class="fas fa-chart-area mr-2"></i>Income Summary</a></li>
-                                <li><a href="{% url 'report' %}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600"><i class="fas fa-file-alt mr-2"></i>Reports</a></li>
-                            </ul>
-                        </div>
-                    </li>
-
-                    <!-- Goals -->
-                    <li>
-                        <a href="{% url 'list_goals' %}" class="flex items-center py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700">
-                            <i class="fas fa-flag mr-2"></i>Goals
-                        </a>
-                    </li>
-
-                    <!-- Settings Section -->
-                    <li>
-                        <button id="settings-dropdown" data-dropdown-toggle="settings-menu" class="flex items-center py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700">
-                            <i class="fas fa-cog mr-2"></i>Settings <i class="fas fa-chevron-down ml-2"></i>
-                        </button>
-                        <div id="settings-menu" class="hidden z-10 bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700">
-                            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
-                                <li><a href="{% url 'preferences' %}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600"><i class="fas fa-sliders-h mr-2"></i>General</a></li>
-                                <li><a href="{% url 'account' %}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600"><i class="fas fa-user mr-2"></i>Account</a></li>
-                            </ul>
-                        </div>
-                    </li>
-                </ul>
             </div>
         </div>
-    </nav>
+        
+        <!-- User Info with Dropdown -->
+        <div class="p-4 border-b border-gray-200 dark:border-gray-700 relative">
+            <div class="flex items-center">
+                <div class="dropdown relative">
+                    <button id="user-dropdown-button" class="flex items-center w-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg p-2">
+                        <i class="fas fa-user-circle text-2xl text-gray-600 dark:text-gray-400 mr-3"></i>
+                        <div id="user-info">
+                            <p class="font-medium text-gray-800 dark:text-white">{{request.user.username}}</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">{{request.user.email}}</p>
+                        </div>
+                        <i class="fas fa-chevron-down ml-auto text-xs"></i>
+                    </button>
+                    
+                    <!-- Dropdown menu -->
+                    <div id="user-dropdown" class="z-50 hidden absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 border border-gray-200 dark:border-gray-700">
+                        <div class="py-1">
+                            <a href="{% url 'account' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <i class="fas fa-user w-5 text-gray-500 dark:text-gray-400 mr-2"></i>
+                                <span>Account</span>
+                            </a>
+                            <a href="{% url 'preferences' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <i class="fas fa-sliders-h w-5 text-gray-500 dark:text-gray-400 mr-2"></i>
+                                <span>Preferences</span>
+                            </a>
+                            <button id="theme-toggle" class="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <i class="fas fa-sun w-5 dark:hidden text-gray-500 dark:text-gray-400 mr-2"></i>
+                                <i class="fas fa-moon hidden w-5 dark:inline text-gray-500 dark:text-gray-400 mr-2"></i>
+                                <span>Toggle Theme</span>
+                            </button>
+                            <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                            <a href="{% url 'logout' %}" class="flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <i class="fas fa-sign-out-alt w-5 mr-2"></i>
+                                <span>Logout</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Navigation Links -->
+        <nav class="p-2">
+            <p class="px-3 py-2 text-xs uppercase font-semibold text-gray-500 dark:text-gray-400">Dashboard</p>
+            <ul class="space-y-1">
+                <li>
+                    <a href="{% url 'expenses' %}" class="flex items-center px-3 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                        <i class="fas fa-money-bill w-5 text-gray-500 dark:text-gray-400"></i>
+                        <span class="ml-3">Expenses</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'income' %}" class="flex items-center px-3 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                        <i class="fas fa-plus-circle w-5 text-gray-500 dark:text-gray-400"></i>
+                        <span class="ml-3">Income</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'forecast' %}" class="flex items-center px-3 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                        <i class="fas fa-chart-line w-5 text-gray-500 dark:text-gray-400"></i>
+                        <span class="ml-3">Forecast</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'chatbot' %}" class="flex items-center px-3 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                        <i class="fas fa-comments w-5 text-gray-500 dark:text-gray-400"></i>
+                        <span class="ml-3">Ask for Advice</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <p class="mt-6 px-3 py-2 text-xs uppercase font-semibold text-gray-500 dark:text-gray-400">Summary</p>
+            <ul class="space-y-1">
+                <li>
+                    <a href="{% url 'stats' %}" class="flex items-center px-3 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                        <i class="fas fa-chart-pie w-5 text-gray-500 dark:text-gray-400"></i>
+                        <span class="ml-3">Expense Summary</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'income-summary' %}" class="flex items-center px-3 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                        <i class="fas fa-chart-area w-5 text-gray-500 dark:text-gray-400"></i>
+                        <span class="ml-3">Income Summary</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'report' %}" class="flex items-center px-3 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                        <i class="fas fa-file-alt w-5 text-gray-500 dark:text-gray-400"></i>
+                        <span class="ml-3">Reports</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <p class="mt-6 px-3 py-2 text-xs uppercase font-semibold text-gray-500 dark:text-gray-400">Other</p>
+            <ul class="space-y-1">
+                <li>
+                    <a href="{% url 'list_goals' %}" class="flex items-center px-3 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                        <i class="fas fa-flag w-5 text-gray-500 dark:text-gray-400"></i>
+                        <span class="ml-3">Goals</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'preferences' %}" class="flex items-center px-3 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                        <i class="fas fa-sliders-h w-5 text-gray-500 dark:text-gray-400"></i>
+                        <span class="ml-3">Preferences</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'account' %}" class="flex items-center px-3 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                        <i class="fas fa-user w-5 text-gray-500 dark:text-gray-400"></i>
+                        <span class="ml-3">Account</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        
+        <!-- Bottom Controls -->
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <button id="theme-toggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400">
+                    <i class="fas fa-sun dark:hidden"></i>
+                    <i class="fas fa-moon hidden dark:inline"></i>
+                    <span id="theme-text" class="ml-2">Theme</span>
+                </button>
+                <a href="{% url 'logout' %}" class="flex items-center px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                    <i class="fas fa-sign-out-alt text-gray-500 dark:text-gray-400"></i>
+                    <span id="logout-text" class="ml-2">Logout</span>
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Mobile Navigation Bar -->
+    <div class="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg">
+        <div class="flex justify-around py-2">
+            <button id="mobile-sidebar-toggle" class="p-2 rounded-lg text-gray-600 dark:text-gray-400">
+                <i class="fas fa-bars"></i>
+            </button>
+            <a href="{% url 'expenses' %}" class="p-2 rounded-lg text-gray-600 dark:text-gray-400">
+                <i class="fas fa-money-bill"></i>
+            </a>
+            <a href="{% url 'income' %}" class="p-2 rounded-lg text-gray-600 dark:text-gray-400">
+                <i class="fas fa-plus-circle"></i>
+            </a>
+            <a href="{% url 'stats' %}" class="p-2 rounded-lg text-gray-600 dark:text-gray-400">
+                <i class="fas fa-chart-pie"></i>
+            </a>
+            <a href="{% url 'list_goals' %}" class="p-2 rounded-lg text-gray-600 dark:text-gray-400">
+                <i class="fas fa-flag"></i>
+            </a>
+        </div>
+    </div>
 
     <!-- Main Content -->
-    <main class="pt-16">
+    <main id="content" class="content content-expanded min-h-screen pt-4 pb-16 md:pb-4">
         <div class="p-4 sm:p-6">
             {% block content %}{% endblock %}
         </div>
@@ -240,21 +343,116 @@
     <!-- Flowbite JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.js"></script>
     
-    <!-- Theme Toggle Script -->
+    <!-- Theme and Sidebar Scripts -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Theme toggle functionality
             const themeToggleBtn = document.getElementById('theme-toggle');
             const html = document.documentElement;
 
+            // User dropdown functionality
+            const userDropdownButton = document.getElementById('user-dropdown-button');
+            const userDropdown = document.getElementById('user-dropdown');
+            
+            // Toggle dropdown when clicking the button
+            userDropdownButton?.addEventListener('click', () => {
+                userDropdown.classList.toggle('hidden');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (event) => {
+                if (!userDropdownButton?.contains(event.target) && !userDropdown?.contains(event.target)) {
+                    userDropdown?.classList.add('hidden');
+                }
+            });
+            
+            // Multiple theme toggle buttons support
+            const allThemeToggles = document.querySelectorAll('[id="theme-toggle"]');
+            
             // Check for saved theme preference
             const savedTheme = localStorage.getItem('theme');
             if (savedTheme) {
                 html.classList.toggle('dark', savedTheme === 'dark');
+            } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
             }
 
-            themeToggleBtn?.addEventListener('click', () => {
-                html.classList.toggle('dark');
-                localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+            // Add click event for all theme toggle buttons
+            allThemeToggles.forEach(button => {
+                button.addEventListener('click', () => {
+                    html.classList.toggle('dark');
+                    localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+                });
+            });
+            
+            // Sidebar toggle functionality
+            const toggleSidebarBtn = document.getElementById('toggle-sidebar');
+            const mobileSidebarToggle = document.getElementById('mobile-sidebar-toggle');
+            const sidebar = document.getElementById('sidebar');
+            const content = document.getElementById('content');
+            const appTitle = document.getElementById('app-title');
+            const userInfo = document.getElementById('user-info');
+            const themeText = document.getElementById('theme-text');
+            const logoutText = document.getElementById('logout-text');
+            
+            // Check for saved sidebar state
+            const sidebarState = localStorage.getItem('sidebarState');
+            if (sidebarState === 'collapsed') {
+                sidebar.classList.remove('sidebar-expanded');
+                sidebar.classList.add('sidebar-collapsed');
+                content.classList.remove('content-expanded');
+                content.classList.add('content-collapsed');
+                appTitle.style.display = 'none';
+                userInfo.style.display = 'none';
+                themeText.style.display = 'none';
+                logoutText.style.display = 'none';
+            }
+            
+            // Toggle sidebar function
+            function toggleSidebar() {
+                const isExpanded = sidebar.classList.contains('sidebar-expanded');
+                
+                if (isExpanded) {
+                    sidebar.classList.remove('sidebar-expanded');
+                    sidebar.classList.add('sidebar-collapsed');
+                    content.classList.remove('content-expanded');
+                    content.classList.add('content-collapsed');
+                    appTitle.style.display = 'none';
+                    userInfo.style.display = 'none';
+                    themeText.style.display = 'none';
+                    logoutText.style.display = 'none';
+                    localStorage.setItem('sidebarState', 'collapsed');
+                } else {
+                    sidebar.classList.remove('sidebar-collapsed');
+                    sidebar.classList.add('sidebar-expanded');
+                    content.classList.remove('content-collapsed');
+                    content.classList.add('content-expanded');
+                    appTitle.style.display = 'block';
+                    userInfo.style.display = 'block';
+                    themeText.style.display = 'inline';
+                    logoutText.style.display = 'inline';
+                    localStorage.setItem('sidebarState', 'expanded');
+                }
+            }
+            
+            // Mobile sidebar toggle function
+            function toggleMobileSidebar() {
+                sidebar.classList.toggle('visible');
+            }
+            
+            // Add event listeners for sidebar toggles
+            toggleSidebarBtn?.addEventListener('click', toggleSidebar);
+            mobileSidebarToggle?.addEventListener('click', toggleMobileSidebar);
+            
+            // Highlight current page in sidebar
+            const currentPath = window.location.pathname;
+            const sidebarLinks = document.querySelectorAll('#sidebar a');
+            
+            sidebarLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('sidebar-item-active');
+                }
             });
         });
     </script>
