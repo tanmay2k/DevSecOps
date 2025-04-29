@@ -2,20 +2,7 @@
 {% load static %}
 
 {% block content %}
-<div class="min-h-screen py-6 relative">
-    <!-- Background image with blur -->
-    <div class="fixed inset-0 z-0"
-         style="background-image: url('https://images.pexels.com/photos/186461/pexels-photo-186461.jpeg');
-                background-size: cover;
-                background-position: center;
-                background-repeat: no-repeat;
-                filter: blur(8px);
-                transform: scale(1.1);">
-    </div>
-    
-    <!-- Dark overlay -->
-    <div class="absolute inset-0 bg-black/40 dark:bg-black/70 z-10"></div>
-
+<div class="min-h-screen py-6">
     <!-- Main Content -->
     <div class="container mx-auto px-4 relative z-20">
         {% if messages %}
@@ -23,7 +10,7 @@
         {% else %}
         
         <!-- Main Header & Stats Card -->
-        <div class="mb-6 transition-all bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm p-5 rounded-lg shadow-lg">
+        <div class="mb-6 transition-all bg-white dark:bg-gray-800 p-5 rounded-lg shadow-lg">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-1">
                 <div>
                     <h1 class="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -82,7 +69,7 @@
         </div>
 
         <!-- Chart Section -->
-        <div class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden border border-gray-200 dark:border-purple-800 transition-all mb-6">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-200 dark:border-purple-800 transition-all mb-6">
             <div class="p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-purple-800">
                 <h2 class="text-xl font-bold text-gray-800 dark:text-white flex items-center">
                     <i class="fas fa-chart-area mr-2 text-purple-600 dark:text-purple-400"></i>
@@ -99,7 +86,7 @@
         <!-- Main Content Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <!-- Category Breakdown -->
-            <div class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 dark:border-purple-800">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-purple-800">
                 <div class="p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-purple-800 flex justify-between items-center">
                     <h2 class="text-lg font-bold text-gray-800 dark:text-white flex items-center">
                         <i class="fas fa-tags mr-2 text-purple-600 dark:text-purple-400"></i>
@@ -274,7 +261,7 @@
             </div>
 
             <!-- Daily Forecast -->
-            <div class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 dark:border-purple-800">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-purple-800">
                 <div class="p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-purple-800">
                     <h2 class="text-lg font-bold text-gray-800 dark:text-white flex items-center">
                         <i class="fas fa-calendar-day mr-2 text-purple-600 dark:text-purple-400"></i>
@@ -310,7 +297,7 @@
         </div>
 
         <!-- Tips Section -->
-        <div class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden border border-gray-200 dark:border-purple-800 transition-all mb-8">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-200 dark:border-purple-800 transition-all mb-8">
             <div class="p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-purple-800">
                 <h2 class="text-lg font-bold text-gray-800 dark:text-white flex items-center">
                     <i class="fas fa-lightbulb mr-2 text-yellow-500"></i>

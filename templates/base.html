@@ -181,13 +181,42 @@
             </div>
         </div>
         
-        <!-- User Info -->
-        <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+        <!-- User Info with Dropdown -->
+        <div class="p-4 border-b border-gray-200 dark:border-gray-700 relative">
             <div class="flex items-center">
-                <i class="fas fa-user-circle text-2xl text-gray-600 dark:text-gray-400 mr-3"></i>
-                <div id="user-info">
-                    <p class="font-medium text-gray-800 dark:text-white">{{request.user.username}}</p>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">{{request.user.email}}</p>
+                <div class="dropdown relative">
+                    <button id="user-dropdown-button" class="flex items-center w-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg p-2">
+                        <i class="fas fa-user-circle text-2xl text-gray-600 dark:text-gray-400 mr-3"></i>
+                        <div id="user-info">
+                            <p class="font-medium text-gray-800 dark:text-white">{{request.user.username}}</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">{{request.user.email}}</p>
+                        </div>
+                        <i class="fas fa-chevron-down ml-auto text-xs"></i>
+                    </button>
+                    
+                    <!-- Dropdown menu -->
+                    <div id="user-dropdown" class="z-50 hidden absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 border border-gray-200 dark:border-gray-700">
+                        <div class="py-1">
+                            <a href="{% url 'account' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <i class="fas fa-user w-5 text-gray-500 dark:text-gray-400 mr-2"></i>
+                                <span>Account</span>
+                            </a>
+                            <a href="{% url 'preferences' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <i class="fas fa-sliders-h w-5 text-gray-500 dark:text-gray-400 mr-2"></i>
+                                <span>Preferences</span>
+                            </a>
+                            <button id="theme-toggle" class="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <i class="fas fa-sun w-5 dark:hidden text-gray-500 dark:text-gray-400 mr-2"></i>
+                                <i class="fas fa-moon hidden w-5 dark:inline text-gray-500 dark:text-gray-400 mr-2"></i>
+                                <span>Toggle Theme</span>
+                            </button>
+                            <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                            <a href="{% url 'logout' %}" class="flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <i class="fas fa-sign-out-alt w-5 mr-2"></i>
+                                <span>Logout</span>
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -258,38 +287,26 @@
                         <span class="ml-3">Preferences</span>
                     </a>
                 </li>
+                <li>
+                    <a href="{% url 'account' %}" class="flex items-center px-3 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                        <i class="fas fa-user w-5 text-gray-500 dark:text-gray-400"></i>
+                        <span class="ml-3">Account</span>
+                    </a>
+                </li>
             </ul>
         </nav>
         
         <!-- Bottom Controls -->
         <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-700">
-            <div class="flex flex-col space-y-2">
-                <!-- Theme Toggle Button -->
-                <button id="theme-toggle" class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
-                    <div class="flex items-center">
-                        <i class="fas fa-sun w-5 text-amber-500 dark:hidden"></i>
-                        <i class="fas fa-moon w-5 text-blue-400 hidden dark:inline"></i>
-                        <span id="theme-text" class="ml-3">Toggle Theme</span>
-                    </div>
-                    <i class="fas fa-chevron-right text-gray-400"></i>
+            <div class="flex items-center justify-between">
+                <button id="theme-toggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400">
+                    <i class="fas fa-sun dark:hidden"></i>
+                    <i class="fas fa-moon hidden dark:inline"></i>
+                    <span id="theme-text" class="ml-2">Theme</span>
                 </button>
-                
-                <!-- Account Button -->
-                <a href="{% url 'account' %}" class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
-                    <div class="flex items-center">
-                        <i class="fas fa-user w-5 text-gray-500 dark:text-gray-400"></i>
-                        <span class="ml-3">Account</span>
-                    </div>
-                    <i class="fas fa-chevron-right text-gray-400"></i>
-                </a>
-                
-                <!-- Logout Button -->
-                <a href="{% url 'logout' %}" class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
-                    <div class="flex items-center">
-                        <i class="fas fa-sign-out-alt w-5 text-gray-500 dark:text-gray-400"></i>
-                        <span id="logout-text" class="ml-3">Logout</span>
-                    </div>
-                    <i class="fas fa-chevron-right text-gray-400"></i>
+                <a href="{% url 'logout' %}" class="flex items-center px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                    <i class="fas fa-sign-out-alt text-gray-500 dark:text-gray-400"></i>
+                    <span id="logout-text" class="ml-2">Logout</span>
                 </a>
             </div>
         </div>
@@ -333,6 +350,25 @@
             const themeToggleBtn = document.getElementById('theme-toggle');
             const html = document.documentElement;
 
+            // User dropdown functionality
+            const userDropdownButton = document.getElementById('user-dropdown-button');
+            const userDropdown = document.getElementById('user-dropdown');
+            
+            // Toggle dropdown when clicking the button
+            userDropdownButton?.addEventListener('click', () => {
+                userDropdown.classList.toggle('hidden');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (event) => {
+                if (!userDropdownButton?.contains(event.target) && !userDropdown?.contains(event.target)) {
+                    userDropdown?.classList.add('hidden');
+                }
+            });
+            
+            // Multiple theme toggle buttons support
+            const allThemeToggles = document.querySelectorAll('[id="theme-toggle"]');
+            
             // Check for saved theme preference
             const savedTheme = localStorage.getItem('theme');
             if (savedTheme) {
@@ -342,10 +378,12 @@
                 localStorage.setItem('theme', 'dark');
             }
 
-            // Add click event for theme toggle
-            themeToggleBtn?.addEventListener('click', () => {
-                html.classList.toggle('dark');
-                localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+            // Add click event for all theme toggle buttons
+            allThemeToggles.forEach(button => {
+                button.addEventListener('click', () => {
+                    html.classList.toggle('dark');
+                    localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+                });
             });
             
             // Sidebar toggle functionality
