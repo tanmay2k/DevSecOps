@@ -27,3 +27,17 @@ class FamilyMemberProfileForm(forms.ModelForm):
                 'placeholder': 'e.g. Spouse, Child, Parent'
             })
         }
+
+class DemographicProfileForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = ['date_of_birth', 'gender']
+        widgets = {
+            'date_of_birth': forms.DateInput(attrs={
+                'class': 'bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5',
+                'type': 'date'
+            }),
+            'gender': forms.Select(attrs={
+                'class': 'bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5'
+            })
+        }

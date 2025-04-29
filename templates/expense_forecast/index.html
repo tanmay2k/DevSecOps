@@ -2,6 +2,12 @@
 {% load static %}
 
 {% block content %}
+<!-- Include Chart.js for donut chart -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+
+<!-- Include Plotly.js for the main forecast visualization -->
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+
 <div class="min-h-screen py-6">
     <!-- Main Content -->
     <div class="container mx-auto px-4 relative z-20">
@@ -366,6 +372,17 @@ document.addEventListener('DOMContentLoaded', function() {
         chart.update();
     }
     
+    function updateFallbackChartTheme() {
+        const chart = Chart.getChart('fallbackCategoryChart');
+        if (!chart) return;
+        
+        chart.options.plugins.tooltip.backgroundColor = currentTheme === 'dark' ? 'rgba(30, 41, 59, 0.8)' : 'rgba(255, 255, 255, 0.8)';
+        chart.options.plugins.tooltip.titleColor = currentTheme === 'dark' ? '#e2e8f0' : '#1e293b';
+        chart.options.plugins.tooltip.bodyColor = currentTheme === 'dark' ? '#e2e8f0' : '#1e293b';
+        chart.options.plugins.tooltip.borderColor = currentTheme === 'dark' ? 'rgba(148, 163, 184, 0.2)' : 'rgba(100, 116, 139, 0.2)';
+        chart.update();
+    }
+    
     // Show/hide full forecast data
     const showMoreBtn = document.getElementById('showMoreForecast');
     const fullForecastData = document.getElementById('fullForecastData');
@@ -578,26 +595,6 @@ document.addEventListener('DOMContentLoaded', function() {
         {% endif %}
     }
     
-    // Add MutationObserver to handle theme changes from user preferences
-    const observer = new MutationObserver(mutations => {
-        mutations.forEach(mutation => {
-            if (mutation.attributeName === 'class' && 
-                (mutation.target.classList.contains('dark') || 
-                !mutation.target.classList.contains('dark'))) {
-                // Theme has changed
-                currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-                updateChartTheme();
-                updateFallbackChartTheme();
-            }
-        });
-    });
-    
-    // Start observing html element for class changes
-    observer.observe(document.documentElement, { 
-        attributes: true,
-        attributeFilter: ['class']
-    });
-    
     // Generate fallback chart if needed
     if (document.getElementById('fallbackCategoryChart')) {
         console.log("Creating fallback category chart");
@@ -605,17 +602,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Sample data for fallback chart
         const fallbackLabels = ['General', 'Food', 'Transportation', 'Utilities'];
         const fallbackValues = [40, 30, 20, 10];
-        
-        function updateFallbackChartTheme() {
-            const chart = Chart.getChart('fallbackCategoryChart');
-            if (!chart) return;
-            
-            chart.options.plugins.tooltip.backgroundColor = currentTheme === 'dark' ? 'rgba(30, 41, 59, 0.8)' : 'rgba(255, 255, 255, 0.8)';
-            chart.options.plugins.tooltip.titleColor = currentTheme === 'dark' ? '#e2e8f0' : '#1e293b';
-            chart.options.plugins.tooltip.bodyColor = currentTheme === 'dark' ? '#e2e8f0' : '#1e293b';
-            chart.options.plugins.tooltip.borderColor = currentTheme === 'dark' ? 'rgba(148, 163, 184, 0.2)' : 'rgba(100, 116, 139, 0.2)';
-            chart.update();
-        }
         
         try {
             // Create the fallback chart with theme-aware config
@@ -699,6 +685,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Theme has changed
                 currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
                 updateChartTheme();
+                updateFallbackChartTheme();
             }
         });
     });
@@ -710,9 +697,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-
-<!-- Include Chart.js for donut chart -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 
 <!-- Add custom styles for transitions and theme compatibility -->
 <style>

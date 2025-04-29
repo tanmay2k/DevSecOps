@@ -32,8 +32,29 @@
             </div>
         </div>
 
-        <!-- Charts Section -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {% if demographics.age or demographics.gender %}
+        <!-- Demographic Information -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Your Demographics</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {% if demographics.age %}
+                <div>
+                    <span class="text-sm text-gray-500">Age Group</span>
+                    <p class="text-lg font-medium text-gray-900">{{ demographics.age }} years</p>
+                </div>
+                {% endif %}
+                {% if demographics.gender %}
+                <div>
+                    <span class="text-sm text-gray-500">Gender</span>
+                    <p class="text-lg font-medium text-gray-900">{{ demographics.gender }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Charts Section - First Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <!-- Category Chart -->
             <div class="bg-white rounded-lg shadow p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Expenses by Category</h3>
@@ -50,10 +71,206 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Charts Section - Second Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Payment Method Chart -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Expenses by Payment Method</h3>
+                <div class="relative" style="height: 400px;">
+                    <canvas id="paymentMethodChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Transaction Category Chart -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Expenses by Transaction Type</h3>
+                <div class="relative" style="height: 400px;">
+                    <canvas id="transactionCategoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Detailed Breakdown Section -->
+        <div class="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Top Categories Table -->
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="px-6 py-4 border-b">
+                    <h3 class="text-lg font-semibold text-gray-900">Top Categories</h3>
+                </div>
+                <div class="p-6">
+                    <ul class="divide-y divide-gray-200">
+                        {% for category in top_categories %}
+                        <li class="py-3 flex justify-between">
+                            <span class="text-sm">{{ category.name }}</span>
+                            <span class="text-sm font-medium">₹{{ category.total|floatformat:2 }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Top Payment Methods Table -->
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="px-6 py-4 border-b">
+                    <h3 class="text-lg font-semibold text-gray-900">Payment Methods</h3>
+                </div>
+                <div class="p-6">
+                    <ul class="divide-y divide-gray-200">
+                        {% for method in payment_methods %}
+                        <li class="py-3 flex justify-between">
+                            <span class="text-sm">{{ method.name }}</span>
+                            <span class="text-sm font-medium">₹{{ method.total|floatformat:2 }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Top Transaction Categories Table -->
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="px-6 py-4 border-b">
+                    <h3 class="text-lg font-semibold text-gray-900">Transaction Types</h3>
+                </div>
+                <div class="p-6">
+                    <ul class="divide-y divide-gray-200">
+                        {% for type in transaction_categories %}
+                        <li class="py-3 flex justify-between">
+                            <span class="text-sm">{{ type.name }}</span>
+                            <span class="text-sm font-medium">₹{{ type.total|floatformat:2 }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 <!-- Loading the latest Chart.js version -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-<script src="{% static 'js/stats.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Parse the chart data from Django context
+        const chartData = JSON.parse('{{ chart_data|safe }}');
+        const paymentChartData = JSON.parse('{{ payment_chart_data|safe }}');
+        const transactionChartData = JSON.parse('{{ transaction_chart_data|safe }}');
+        
+        // Set up Category chart
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        new Chart(categoryCtx, {
+            type: 'doughnut',
+            data: chartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return `${label}: ₹${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Set up Payment Method chart
+        const paymentCtx = document.getElementById('paymentMethodChart').getContext('2d');
+        new Chart(paymentCtx, {
+            type: 'doughnut',
+            data: paymentChartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return `${label}: ₹${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Set up Transaction Category chart
+        const transactionCtx = document.getElementById('transactionCategoryChart').getContext('2d');
+        new Chart(transactionCtx, {
+            type: 'doughnut',
+            data: transactionChartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return `${label}: ₹${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Fetch and set up Spent By chart via API
+        fetch('{% url "expense_category_summary" %}')
+            .then(response => response.json())
+            .then(data => {
+                const spentByData = data.expense_spent_by_data;
+                const spentByLabels = Object.keys(spentByData);
+                const spentByValues = Object.values(spentByData);
+                
+                const spentByCtx = document.getElementById('spentByChart').getContext('2d');
+                new Chart(spentByCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: spentByLabels,
+                        datasets: [{
+                            data: spentByValues,
+                            backgroundColor: [
+                                '#6366f1', '#14b8a6', '#f97316',
+                                '#8b5cf6', '#06b6d4', '#f472b6',
+                                '#ef4444', '#84cc16'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right'
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error('Error fetching expense data:', error));
+    });
+</script>
 {% endblock %}

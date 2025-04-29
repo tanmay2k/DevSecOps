@@ -50,26 +50,58 @@
 
                 <form action="" method="post" class="form-grid">
                     {% csrf_token %}
-                    {% for field in form %}
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            {{ field.label }}
-                        </label>
-                        <div class="mt-1">
-                            {{ field }}
-                        </div>
-                        {% if field.errors %}
-                        <p class="mt-2 text-sm text-red-600 dark:text-red-500">
-                            {{ field.errors|striptags }}
-                        </p>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
+                    <input type="hidden" name="update_profile" value="true">
 
-                    <button type="submit" 
-                        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
-                        <i class="fas fa-user-edit mr-2"></i>Update Profile
-                    </button>
+                    <!-- Personal Information -->
+                    <h4 class="text-xl font-semibold mt-2 mb-4 text-gray-900 dark:text-white">Personal Information</h4>
+                    
+                    <!-- Username field -->
+                    <div>
+                        <label for="{{ form.username.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Username</label>
+                        {{ form.username }}
+                    </div>
+
+                    <!-- First name field -->
+                    <div>
+                        <label for="{{ form.first_name.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">First Name</label>
+                        {{ form.first_name }}
+                    </div>
+
+                    <!-- Last name field -->
+                    <div>
+                        <label for="{{ form.last_name.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Last Name</label>
+                        {{ form.last_name }}
+                    </div>
+
+                    <!-- Email field -->
+                    <div>
+                        <label for="{{ form.email.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Email</label>
+                        {{ form.email }}
+                    </div>
+                    
+                    <!-- Demographic Information Section -->
+                    <h4 class="text-xl font-semibold mt-6 mb-4 text-gray-900 dark:text-white">Demographic Information</h4>
+                    
+                    <!-- Date of Birth field -->
+                    <div>
+                        <label for="{{ demographic_form.date_of_birth.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Date of Birth</label>
+                        {{ demographic_form.date_of_birth }}
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">This helps us provide more personalized insights about your spending habits</p>
+                    </div>
+
+                    <!-- Gender field -->
+                    <div>
+                        <label for="{{ demographic_form.gender.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Gender</label>
+                        {{ demographic_form.gender }}
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Optional information for demographic analysis</p>
+                    </div>
+
+                    <!-- Submit button -->
+                    <div class="mt-6">
+                        <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                            Save Changes
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
