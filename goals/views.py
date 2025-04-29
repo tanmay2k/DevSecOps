@@ -10,15 +10,14 @@ from django.db.models import Sum
 from django.utils import timezone
 import json
 from decimal import Decimal
-from openai import OpenAI
+import requests  # Replace OpenAI with standard requests
 from django.conf import settings
 import logging
 
+# Ollama configuration for local model (same as finassist)
+OLLAMA_BASE_URL = "http://localhost:11434/api"
+OLLAMA_MODEL = "gemma:2b"
 
-client = OpenAI(
-	base_url="https://api-inference.huggingface.co/v1/",
-    api_key="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",
-)
 def generate_ai_recommendations(user):
     # Fetch user data
     goals = Goal.objects.filter(owner=user)
@@ -49,51 +48,81 @@ def generate_ai_recommendations(user):
             "status": "behind" if progress['daily_savings_required'] > Decimal('0') else "on_track"
         })
     
-    # Create proper message structure for OpenAI API
-    messages = [
-        {
-            "role": "system",
-            "content": """You are a financial advisor providing personalized recommendations. 
-            Provide specific, actionable recommendations to help improve savings and investments. 
-            Consider:
-            1. Expense reduction opportunities
-            2. Savings goal adjustments
-            3. Investment suggestions based on surplus
-            4. Behavioral financial advice
-            5. Risk management strategies
-            
-            Format the response with clear sections and bullet points. Use simple language."""
-        },
-        {
-            "role": "user",
-            "content": f"""Here is my financial data:
-            
-            Monthly Income: ₹{monthly_income:.2f}
-            Monthly Expenses: ₹{monthly_expenses:.2f}
-            Net Cash Flow: ₹{net_cash_flow:.2f}
-            
-            Top Expense Categories:
-            {json.dumps(top_expenses, indent=2)}
-            
-            Savings Goals Progress:
-            {json.dumps(goals_analysis, indent=2)}
-            
-            Please provide recommendations based on this data."""
-        }
-    ]
+    # Create an optimized prompt for local model (much shorter than before)
+    prompt = """You are a financial advisor. Be brief and specific.
+
+Financial Summary:
+- Monthly Income: ₹{income:.2f}
+- Monthly Expenses: ₹{expenses:.2f}
+- Net Cash Flow: ₹{cashflow:.2f}
+
+Top Expenses:
+{top_expenses}
+
+Goals:
+{goals}
+
+Give 3-5 actionable recommendations to improve finances. Be specific.""".format(
+        income=monthly_income,
+        expenses=monthly_expenses,
+        cashflow=net_cash_flow,
+        top_expenses="\n".join([f"- {e['category']}: ₹{e['amount']:.2f}" for e in top_expenses[:2]]),
+        goals="\n".join([f"- {g['name']}: {g['progress']:.1f}% complete" for g in goals_analysis[:2]])
+    )
     
-    # Make API request to OpenAI
-    try:
-        response = client.chat.completions.create(
-            model="microsoft/Phi-3.5-mini-instruct",  # Replace with actual model name if different
-            messages=messages,
-            temperature=0.7,
-            max_tokens=500
-        )
-        return response.choices[0].message.content
-    except Exception as e:
-        logging.error(f"Error generating recommendations: {str(e)}")
-        return "Unable to generate recommendations at this time. Please try again later."
+    # Call the Ollama API with increased timeout and retry logic
+    max_retries = 2
+    current_retry = 0
+    timeout_seconds = 45  # Increased timeout for slower systems
+    
+    while current_retry <= max_retries:
+        try:
+            # Using the generate endpoint with minimal parameters
+            response = requests.post(
+                f"{OLLAMA_BASE_URL}/generate",
+                json={
+                    "model": OLLAMA_MODEL,
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.5,  # Lower temperature for more predictable responses
+                        "num_predict": 200,  # Limit token count for faster generation
+                        "top_k": 40,
+                        "top_p": 0.9
+                    }
+                },
+                timeout=timeout_seconds
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                recommendations = result.get("response", "")
+                
+                # Format the response with headers if successful
+                if recommendations:
+                    formatted_response = "## Financial Recommendations\n\n" + recommendations
+                    return formatted_response
+                else:
+                    return "Based on your financial data, I recommend tracking expenses more carefully and setting aside a portion of your income for savings goals."
+            else:
+                current_retry += 1
+                if current_retry > max_retries:
+                    logging.error(f"Failed to generate recommendations after {max_retries} attempts")
+                    return "I'm unable to generate personalized recommendations right now. As a general tip, try to save at least 20% of your income and reduce spending in your highest expense categories."
+        
+        except requests.exceptions.Timeout:
+            current_retry += 1
+            timeout_seconds += 15  # Increase timeout for next retry
+            if current_retry > max_retries:
+                logging.error("Timeout while generating AI recommendations")
+                return "I apologize, but generating detailed recommendations is taking too long. A good financial practice is to maintain an emergency fund and review your largest expense categories for potential savings."
+            
+        except Exception as e:
+            logging.error(f"Error generating recommendations: {str(e)}")
+            return "I encountered an issue analyzing your financial data. Consider the 50/30/20 rule: 50% for needs, 30% for wants, and 20% for savings and debt repayment."
+    
+    return "Unable to provide personalized recommendations at this time. Please try again later."
+
 @login_required
 def add_goal(request):
     if request.method == 'POST':
