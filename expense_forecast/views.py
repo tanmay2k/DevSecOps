@@ -16,6 +16,11 @@ from sklearn.metrics import mean_absolute_error
 from django.core.cache import cache
 import csv
 import io
+from datetime import timedelta
+from userprofile.models import Profile
+from django.http import JsonResponse
+from django.db.models import Q
+from scipy import stats
 
 @login_required
 def index(request):
@@ -1055,3 +1060,312 @@ def get_forecast_data(request):
         'category_forecasts': category_forecasts,
         'model_accuracy': model_accuracy
     })
+
+def calculate_age(birth_date):
+    """Calculate age based on birth date"""
+    if not birth_date:
+        return None
+        
+    today = timezone.now().date()
+    age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+    return age
+
+@login_required
+def demographic_correlation_view(request):
+    """
+    Render the demographic correlation analysis page
+    This page will load the data via AJAX from the API endpoint
+    """
+    return render(request, 'expense_forecast/demographic_correlation.html')
+
+@login_required
+def demographic_correlation_analysis(request):
+    """
+    Analyze correlations between demographic factors (age, gender) and 
+    transaction types/payment methods
+    """
+    # Get user profiles with demographic data
+    all_users = Profile.objects.filter(
+        # Look for family members if the user is the account owner
+        Q(owner=request.user) | 
+        # Or get the account owner if the user is a family member
+        Q(user=request.user)
+    ).select_related('user')
+    
+    if not all_users:
+        return JsonResponse({
+            'error': 'No user profiles available for analysis'
+        })
+    
+    # Get date range - last 6 months
+    end_date = timezone.now().date()
+    start_date = end_date - timedelta(days=180)
+    
+    # Collect all expense data with user demographics
+    all_expense_data = []
+    all_user_ids = [u.user.id for u in all_users]
+    
+    # Get expenses for all relevant users
+    expenses = Expense.objects.filter(
+        owner_id__in=all_user_ids,
+        date__gte=start_date,
+        date__lte=end_date
+    ).select_related('owner')
+    
+    # Create a mapping of user_id to demographic data
+    user_demographics = {}
+    for profile in all_users:
+        age = calculate_age(profile.date_of_birth)
+        gender = profile.get_gender_display() if hasattr(profile, 'get_gender_display') else profile.gender
+        
+        if gender == 'Prefer not to say':
+            gender = None
+            
+        user_demographics[profile.user.id] = {
+            'age': age,
+            'gender': gender,
+            'profile_type': profile.profile_type
+        }
+    
+    # Process expense data
+    for expense in expenses:
+        if expense.owner_id in user_demographics:
+            demographics = user_demographics[expense.owner_id]
+            
+            # Add this expense with demographic information
+            expense_entry = {
+                'amount': float(expense.amount),
+                'category': expense.category,
+                'date': expense.date,
+                'payment_method': expense.payment_method,
+                'transaction_category': expense.transaction_category,
+                'age': demographics.get('age'),
+                'gender': demographics.get('gender'),
+                'profile_type': demographics.get('profile_type')
+            }
+            all_expense_data.append(expense_entry)
+    
+    # Convert to DataFrame
+    df = pd.DataFrame(all_expense_data)
+    
+    if len(df) < 10:
+        return JsonResponse({
+            'error': 'Not enough expense data for demographic analysis'
+        })
+    
+    # Get display mappings
+    payment_method_display = dict(Expense.PAYMENT_METHOD_CHOICES)
+    transaction_category_display = dict(Expense.TRANSACTION_CATEGORY_CHOICES)
+    
+    # Calculate results based on available demographic data
+    results = {
+        'age_groups': {},
+        'gender_analysis': {},
+        'payment_correlations': {},
+        'transaction_correlations': {},
+        'demographic_insights': []
+    }
+    
+    # 1. Age Group Analysis (if age data is available)
+    if 'age' in df.columns and df['age'].notna().any():
+        # Create age groups
+        bins = [0, 18, 25, 35, 45, 55, 65, 100]
+        labels = ['<18', '18-24', '25-34', '35-44', '45-54', '55-64', '65+']
+        df['age_group'] = pd.cut(df['age'], bins=bins, labels=labels, right=False)
+        
+        # Analyze payment methods by age group
+        age_payment = pd.crosstab(
+            df['age_group'], 
+            df['payment_method'], 
+            values=df['amount'], 
+            aggfunc='sum',
+            normalize='index'
+        ) * 100
+        
+        # Analyze transaction categories by age group
+        age_transaction = pd.crosstab(
+            df['age_group'], 
+            df['transaction_category'], 
+            values=df['amount'], 
+            aggfunc='sum',
+            normalize='index'
+        ) * 100
+        
+        # Convert to more readable format
+        for age_group in age_payment.index:
+            payment_data = {}
+            for method in age_payment.columns:
+                if not pd.isna(age_payment.at[age_group, method]):
+                    payment_data[payment_method_display.get(method, method)] = float(age_payment.at[age_group, method])
+                    
+            transaction_data = {}
+            for category in age_transaction.columns:
+                if not pd.isna(age_transaction.at[age_group, category]):
+                    transaction_data[transaction_category_display.get(category, category)] = float(age_transaction.at[age_group, category])
+                    
+            results['age_groups'][str(age_group)] = {
+                'payment_methods': payment_data,
+                'transaction_categories': transaction_data
+            }
+        
+        # Calculate correlation between age and payment methods
+        # Convert to one-hot encoding for correlation analysis
+        payment_dummies = pd.get_dummies(df['payment_method'])
+        age_payment_corr = pd.DataFrame()
+        
+        for method in payment_dummies.columns:
+            # Point-biserial correlation (continuous vs binary)
+            if df['age'].notna().sum() > 10:  # Need enough data points
+                corr, p_value = stats.pointbiserialr(df['age'].fillna(df['age'].mean()), payment_dummies[method])
+                age_payment_corr.at['correlation', method] = corr
+                age_payment_corr.at['p_value', method] = p_value
+        
+        # Only keep statistically significant correlations (p < 0.05)
+        significant_payment_methods = {}
+        for method in age_payment_corr.columns:
+            if age_payment_corr.at['p_value', method] < 0.05:
+                significant_payment_methods[payment_method_display.get(method, method)] = float(age_payment_corr.at['correlation', method])
+        
+        results['payment_correlations']['age'] = significant_payment_methods
+    
+    # 2. Gender Analysis (if gender data is available)
+    if 'gender' in df.columns and df['gender'].notna().any():
+        gender_payment = pd.crosstab(
+            df['gender'], 
+            df['payment_method'], 
+            values=df['amount'], 
+            aggfunc='sum',
+            normalize='index'
+        ) * 100
+        
+        gender_transaction = pd.crosstab(
+            df['gender'], 
+            df['transaction_category'], 
+            values=df['amount'], 
+            aggfunc='sum',
+            normalize='index'
+        ) * 100
+        
+        # Convert to more readable format
+        for gender in gender_payment.index:
+            payment_data = {}
+            for method in gender_payment.columns:
+                if not pd.isna(gender_payment.at[gender, method]):
+                    payment_data[payment_method_display.get(method, method)] = float(gender_payment.at[gender, method])
+                    
+            transaction_data = {}
+            for category in gender_transaction.columns:
+                if not pd.isna(gender_transaction.at[gender, category]):
+                    transaction_data[transaction_category_display.get(category, category)] = float(gender_transaction.at[gender, category])
+                    
+            results['gender_analysis'][str(gender)] = {
+                'payment_methods': payment_data,
+                'transaction_categories': transaction_data
+            }
+    
+    # 3. Generate visualization data for demographic correlations
+    
+    # Create visualization data for transaction types by demographic
+    if 'age_group' in df.columns:
+        transaction_by_age_data = {
+            'labels': [str(x) for x in sorted(df['age_group'].dropna().unique())],
+            'datasets': []
+        }
+        
+        # Get top transaction categories
+        top_transactions = df['transaction_category'].value_counts().nlargest(5).index
+        colors = ['#4dc9f6', '#f67019', '#f53794', '#537bc4', '#acc236']
+        
+        for i, category in enumerate(top_transactions):
+            category_name = transaction_category_display.get(category, category)
+            by_age = []
+            
+            for age_group in transaction_by_age_data['labels']:
+                age_df = df[df['age_group'] == age_group]
+                if len(age_df) > 0:
+                    category_pct = age_df[age_df['transaction_category'] == category]['amount'].sum() / age_df['amount'].sum() * 100
+                    by_age.append(float(category_pct))
+                else:
+                    by_age.append(0)
+                    
+            transaction_by_age_data['datasets'].append({
+                'label': category_name,
+                'data': by_age,
+                'backgroundColor': colors[i % len(colors)],
+                'borderColor': colors[i % len(colors)]
+            })
+        
+        results['visualization_data'] = {
+            'transaction_by_age': transaction_by_age_data
+        }
+    
+    # 4. Generate insights based on the demographic correlations
+    insights = []
+    
+    # Analyze payment methods by age groups
+    if 'age_group' in df.columns:
+        young_adults = df[df['age_group'].isin(['18-24', '25-34'])]
+        middle_aged = df[df['age_group'].isin(['35-44', '45-54'])]
+        older_adults = df[df['age_group'].isin(['55-64', '65+'])]
+        
+        # Compare digital payment adoption
+        digital_methods = ['CREDIT_CARD', 'DEBIT_CARD', 'UPI', 'PAYAPP', 'WALLET']
+        
+        if len(young_adults) > 0 and len(older_adults) > 0:
+            young_digital_pct = young_adults[young_adults['payment_method'].isin(digital_methods)]['amount'].sum() / young_adults['amount'].sum() * 100
+            older_digital_pct = older_adults[older_adults['payment_method'].isin(digital_methods)]['amount'].sum() / older_adults['amount'].sum() * 100
+            
+            if abs(young_digital_pct - older_digital_pct) > 15:  # Significant difference
+                if young_digital_pct > older_digital_pct:
+                    insights.append({
+                        'title': 'Digital Payment Age Gap',
+                        'description': f'Younger users (18-34) use digital payments for {young_digital_pct:.1f}% of expenses, compared to {older_digital_pct:.1f}% for older users (55+).',
+                        'type': 'age'
+                    })
+                else:
+                    insights.append({
+                        'title': 'Surprising Digital Adoption',
+                        'description': f'Older users (55+) use digital payments for {older_digital_pct:.1f}% of expenses, compared to {young_digital_pct:.1f}% for younger users (18-34).',
+                        'type': 'age'
+                    })
+        
+        # Analyze online vs. offline shopping patterns
+        online_categories = ['ECOMMERCE', 'QUICK_COMMERCE']
+        
+        if len(young_adults) > 0 and len(older_adults) > 0:
+            young_online_pct = young_adults[young_adults['transaction_category'].isin(online_categories)]['amount'].sum() / young_adults['amount'].sum() * 100
+            older_online_pct = older_adults[older_adults['transaction_category'].isin(online_categories)]['amount'].sum() / older_adults['amount'].sum() * 100
+            
+            if abs(young_online_pct - older_online_pct) > 15:  # Significant difference
+                insights.append({
+                    'title': 'Online Shopping Demographics',
+                    'description': f'Younger users (18-34) spend {young_online_pct:.1f}% online, compared to {older_online_pct:.1f}% for older users (55+).',
+                    'type': 'age'
+                })
+    
+    # Gender-based insights (if available)
+    if 'gender' in df.columns and len(df['gender'].dropna().unique()) > 1:
+        # Get spending patterns by gender
+        gender_spending = df.groupby('gender')['transaction_category'].value_counts(normalize=True).unstack() * 100
+        
+        # Look for significant differences in transaction categories
+        for category in gender_spending.columns:
+            category_name = transaction_category_display.get(category, category)
+            gender_values = gender_spending[category].dropna()
+            
+            if len(gender_values) > 1:
+                min_val = gender_values.min()
+                max_val = gender_values.max()
+                min_gender = gender_values.idxmin()
+                max_gender = gender_values.idxmax()
+                
+                if max_val - min_val > 10:  # At least 10% difference
+                    insights.append({
+                        'title': f'Gender Difference: {category_name}',
+                        'description': f'{max_gender} users spend {max_val:.1f}% on {category_name} transactions compared to {min_val:.1f}% for {min_gender} users.',
+                        'type': 'gender'
+                    })
+    
+    results['demographic_insights'] = insights
+    
+    return JsonResponse(results)
