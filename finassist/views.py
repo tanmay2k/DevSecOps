@@ -19,7 +19,7 @@ import io
 import json
 
 # Replace OpenAI client with Ollama configuration
-OLLAMA_BASE_URL = "http://localhost:11434/api"
+OLLAMA_BASE_URL = "ollama-service:11434/api"
 OLLAMA_MODEL = "gemma:2b"
 
 # Function to get additional context with optimizations for large datasets
