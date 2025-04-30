@@ -86,7 +86,7 @@ Give 3-5 actionable recommendations to improve finances. Be specific.""".format(
                     "stream": False,
                     "options": {
                         "temperature": 0.5,  # Lower temperature for more predictable responses
-                        "num_predict": 200,  # Limit token count for faster generation
+                        "num_predict": 500,  # Limit token count for faster generation
                         "top_k": 40,
                         "top_p": 0.9
                     }

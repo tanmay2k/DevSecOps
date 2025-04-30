@@ -206,17 +206,25 @@ def generate_response(user_input, context):
                     "stream": False,
                     "options": {
                         "temperature": 0.5,  # Lower temperature for more predictable responses
-                        "num_predict": 150,  # Even fewer tokens for faster generation
+                        "num_predict": 500,  # Increased from 150 to 500 tokens
                         "top_k": 40,
-                        "top_p": 0.9
+                        "top_p": 0.9,
+                        "stop": ["\n\n", "User:"]  # Add stop sequences to prevent truncation
                     }
                 },
                 timeout=timeout_seconds
             )
             
+            # Add response validation
             if response.status_code == 200:
                 result = response.json()
-                return result.get("response", "I've analyzed your financial data and can provide a brief insight.")
+                response_text = result.get("response", "")
+                
+                # Check if response ends naturally or was cut off
+                if response_text and not any(response_text.endswith(x) for x in ['.', '!', '?']):
+                    response_text += "..."
+                    
+                return response_text or "I've analyzed your financial data and can provide a brief insight."
             else:
                 current_retry += 1
                 if current_retry > max_retries:
