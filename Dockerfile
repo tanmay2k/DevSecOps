@@ -36,7 +36,7 @@ EXPOSE 8000
 
 # 9) On container start: make migrations, migrate, then runserver
 CMD ["sh", "-c", "\
-    python manage.py makemigrations && \
+    python manage.py makemigrations finassist expenses userincome userpreferences userprofile goals&& \
     python manage.py migrate && \
     python manage.py runserver 0.0.0.0:8000\
 "]
