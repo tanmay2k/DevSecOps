@@ -14,9 +14,11 @@ import requests  # Replace OpenAI with standard requests
 from django.conf import settings
 import logging
 
-# Ollama configuration for local model (same as finassist)
-OLLAMA_BASE_URL = "http://ollama-service:11434/api"
-OLLAMA_MODEL = "gemma:2b"
+# API KEY configuration for local model (same as finassist)
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=os.getenv("LLM_API_KEY"),
+)
 
 def generate_ai_recommendations(user):
     # Fetch user data
