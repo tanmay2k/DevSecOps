@@ -17,11 +17,25 @@ import numpy as np
 import io
 import json
 import os
+import logging
+import time
+import traceback
 from openai import OpenAI
 from dotenv import load_dotenv
+from django.core.serializers.json import DjangoJSONEncoder
+
+# Configure logger
+logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
+
+# Custom JSON Encoder to handle date objects
+class DateTimeEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (datetime.date, datetime.datetime)):
+            return obj.isoformat()
+        return super().default(obj)
 
 # Initialize OpenRouter client for model access
 client = OpenAI(
@@ -29,23 +43,14 @@ client = OpenAI(
     api_key=os.getenv("LLM_API_KEY"),
 )
 
-# Function to get comprehensive context with caching and data sampling for large datasets
-def get_combined_context(user, cache_timeout=300):
+# Function to get comprehensive context without caching
+def get_combined_context(user):
     """
-    Get combined context with caching and data sampling for large datasets
+    Get combined context with data sampling for large datasets
     
     Parameters:
     user - The user to get context for
-    cache_timeout - Cache timeout in seconds (default: 5 minutes)
     """
-    # Generate a unique cache key for this user
-    cache_key = f"user_financial_context_{user.id}"
-    
-    # Try to get cached context first
-    cached_context = cache.get(cache_key)
-    if cached_context:
-        return cached_context
-    
     # Calculate date ranges for efficient querying
     today = timezone.now().date()
     three_months_ago = today - datetime.timedelta(days=90)
@@ -228,7 +233,15 @@ def chatbot_view(request):
             financial_context = get_combined_context(request.user)
             
             # Generate response using LLM
+            start_time = time.time()  # Moved outside the try block
+            request_id = f"req_{int(time.time())}"
             try:
+                # Log request details
+                logger.info(f"[{request_id}] Starting LLM API call for user: {request.user.username}")
+                logger.info(f"[{request_id}] User query: {user_message[:100]}...")
+                logger.debug(f"[{request_id}] Financial context size: {len(json.dumps(financial_context, cls=DateTimeEncoder))} bytes")
+                
+                # Make client call
                 completion = client.chat.completions.create(
                     extra_body={},
                     model="meta-llama/llama-3.3-70b-instruct",
@@ -264,12 +277,31 @@ When answering questions:
                         },
                         {
                             "role": "user",
-                            "content": f"Here is my comprehensive financial data:\n{json.dumps(financial_context, indent=2)}\n\nMy question is: {user_message}"
+                            "content": f"Here is my comprehensive financial data:\n{json.dumps(financial_context, indent=2, cls=DateTimeEncoder)}\n\nMy question is: {user_message}"
                         }
                     ]
                 )
+                
+                # Calculate response time
+                response_time = time.time() - start_time
+                
+                # Log successful response details
                 assistant_message = completion.choices[0].message.content
+                token_count = completion.usage.total_tokens if hasattr(completion, 'usage') else 'Unknown'
+                prompt_tokens = completion.usage.prompt_tokens if hasattr(completion.usage, 'prompt_tokens') else 'Unknown'
+                completion_tokens = completion.usage.completion_tokens if hasattr(completion.usage, 'completion_tokens') else 'Unknown'
+                
+                logger.info(f"[{request_id}] LLM API call successful. Response time: {response_time:.2f}s")
+                logger.info(f"[{request_id}] Total tokens: {token_count}, Prompt: {prompt_tokens}, Completion: {completion_tokens}")
+                logger.debug(f"[{request_id}] Response preview: {assistant_message[:100]}...")
+                
             except Exception as e:
+                # Enhanced error logging with traceback
+                error_time = time.time() - start_time
+                logger.error(f"[{request_id}] LLM API call failed after {error_time:.2f}s: {str(e)}")
+                logger.error(f"[{request_id}] Error type: {type(e).__name__}")
+                logger.error(f"[{request_id}] Traceback: {traceback.format_exc()}")
+                
                 assistant_message = f"I apologize, but I encountered an error processing your request. This might be due to connectivity issues or service limitations. Please try again in a moment, or rephrase your question."
 
             # Save to database
