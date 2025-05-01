@@ -83,6 +83,7 @@ pypdf
 pypng
 python-bidi
 python-dateutil
+python-dotenv
 pytz
 PyYAML
 qrcode

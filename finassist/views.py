@@ -7,264 +7,205 @@ from goals.models import Goal
 from userincome.models import UserIncome
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
-import requests  # Add requests for Ollama API calls
 from django.template.loader import render_to_string
 from django.db.models import Sum, Avg
+from django.db.models.functions import ExtractMonth
 from django.utils import timezone
 import datetime
-from django.core.cache import cache
 import pandas as pd
 import numpy as np
 import io
 import json
+import os
+from openai import OpenAI
+from dotenv import load_dotenv
 
-# Replace OpenAI client with Ollama configuration
-OLLAMA_BASE_URL = "http://ollama-service:11434/api"
-OLLAMA_MODEL = "gemma:2b"
+# Load environment variables
+load_dotenv()
 
-# Function to get additional context with optimizations for large datasets
-def get_combined_context(user, cache_timeout=300):
-    """
-    Get combined context with caching and data sampling for large datasets
-    
-    Parameters:
-    user - The user to get context for
-    cache_timeout - Cache timeout in seconds (default: 5 minutes)
-    """
-    # Generate a unique cache key for this user
-    cache_key = f"user_financial_context_{user.id}"
-    
-    # Try to get cached context first
-    cached_context = cache.get(cache_key)
-    if cached_context:
-        return cached_context
-    
-    # Calculate date ranges for efficient querying
+# Initialize OpenRouter client
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=os.getenv("LLM_API_KEY"),
+)
+
+def get_financial_context(user):
+    """Get focused financial context for single goal tracking"""
     today = timezone.now().date()
     three_months_ago = today - datetime.timedelta(days=90)
-    one_month_ago = today - datetime.timedelta(days=30)
     
-    # Get recent and relevant data with optimized queries
-    # Recent expenses (last 30 days) + sample of older expenses (last 90 days)
+    # Get the user's primary active goal
+    primary_goal = Goal.objects.filter(
+        owner=user,
+        end_date__gt=today  # Only future goals
+    ).order_by('end_date').first()  # Get the nearest deadline goal
+    
+    if not primary_goal:
+        return {
+            'error': 'no_active_goal',
+            'message': 'No active financial goal found. Please set a goal first.'
+        }
+    
+    # Calculate goal metrics
+    days_until_deadline = (primary_goal.end_date - today).days
+    weeks_remaining = days_until_deadline // 7
+    months_remaining = days_until_deadline / 30.44  # Average month length
+    
+    amount_needed = primary_goal.amount_to_save - primary_goal.current_saved_amount
+    weekly_target = amount_needed / weeks_remaining if weeks_remaining > 0 else 0
+    monthly_target = amount_needed / months_remaining if months_remaining > 0 else 0
+    
+    progress_percent = (primary_goal.current_saved_amount / primary_goal.amount_to_save * 100) if primary_goal.amount_to_save > 0 else 0
+    
+    # Get recent expenses for trend analysis
     recent_expenses = Expense.objects.filter(
-        owner=user, 
-        date__gte=one_month_ago
-    ).values("amount", "date", "description", "category")
-    
-    older_expenses = Expense.objects.filter(
-        owner=user, 
-        date__lt=one_month_ago,
-        date__gte=three_months_ago
-    ).values("amount", "date", "description", "category")[:100]  # Limit older data
-    
-    # Get only active goals or recently completed ones
-    goals = Goal.objects.filter(
-        owner=user
-    ).filter(
-        end_date__gte=three_months_ago
-    ).values("name", "amount_to_save", "current_saved_amount", "end_date")
-    
-    # Get recent income data
-    incomes = UserIncome.objects.filter(
         owner=user,
         date__gte=three_months_ago
-    ).values("amount", "date", "source", "description")
+    ).values('amount', 'date', 'category')
     
-    # Get aggregated statistics for better context with fewer data points
-    expense_stats = Expense.objects.filter(owner=user).aggregate(
-        total_expense=Sum('amount'),
-        avg_monthly=Avg('amount')
-    )
-    
-    income_stats = UserIncome.objects.filter(owner=user).aggregate(
-        total_income=Sum('amount'),
-        avg_monthly=Avg('amount')
-    )
-    
-    # Category-wise expense breakdown
-    category_expenses = list(Expense.objects.filter(
+    # Get income data
+    recent_incomes = UserIncome.objects.filter(
         owner=user,
         date__gte=three_months_ago
-    ).values('category').annotate(total=Sum('amount')))
+    ).values('amount', 'date', 'source', 'is_recurring')
     
-    # Combine all expenses with preference for recent data
-    expenses_list = list(recent_expenses) + list(older_expenses)
+    # Calculate monthly averages and trends
+    total_expenses = sum(expense['amount'] for expense in recent_expenses)
+    total_income = sum(income['amount'] for income in recent_incomes)
     
-    # Build optimized context with both detailed and aggregated data
+    avg_monthly_expenses = total_expenses / 3  # 3 months of data
+    avg_monthly_income = total_income / 3
+    
+    # Calculate potential monthly savings based on current patterns
+    potential_monthly_savings = avg_monthly_income - avg_monthly_expenses
+    
+    # Categorize expenses by essential vs non-essential
+    expense_categories = {}
+    for expense in recent_expenses:
+        category = expense['category']
+        if category not in expense_categories:
+            expense_categories[category] = 0
+        expense_categories[category] += float(expense['amount'])
+    
+    # Sort categories by total amount
+    sorted_categories = sorted(
+        [(cat, amount) for cat, amount in expense_categories.items()],
+        key=lambda x: x[1],
+        reverse=True
+    )
+    
+    # Build context focused on goal achievement
     context = {
-        "recent_expenses": list(recent_expenses),
-        "expenses_sample": expenses_list[:200],  # Limit to reasonable sample
-        "goals": list(goals),
-        "incomes": list(incomes),
-        "stats": {
-            "expense_total": expense_stats.get('total_expense', 0),
-            "expense_average": expense_stats.get('avg_monthly', 0),
-            "income_total": income_stats.get('total_income', 0),
-            "income_average": income_stats.get('avg_monthly', 0),
-            "categories": category_expenses
+        'goal': {
+            'name': primary_goal.name,
+            'target_amount': float(primary_goal.amount_to_save),
+            'current_saved': float(primary_goal.current_saved_amount),
+            'deadline': primary_goal.end_date.strftime('%Y-%m-%d'),
+            'days_remaining': days_until_deadline,
+            'weeks_remaining': weeks_remaining,
+            'months_remaining': round(months_remaining, 1),
+            'progress_percent': round(progress_percent, 2),
+            'amount_needed': float(amount_needed),
+            'weekly_target': round(float(weekly_target), 2),
+            'monthly_target': round(float(monthly_target), 2)
         },
-        "seasonal_trends": generate_seasonal_trends(user),
+        'financial_capacity': {
+            'monthly_income': round(avg_monthly_income, 2),
+            'monthly_expenses': round(avg_monthly_expenses, 2),
+            'potential_monthly_savings': round(potential_monthly_savings, 2),
+            'current_savings_deficit': round(monthly_target - potential_monthly_savings, 2)
+        },
+        'spending_patterns': {
+            'top_expenses': [
+                {
+                    'category': category,
+                    'monthly_average': round(float(amount) / 3, 2)
+                }
+                for category, amount in sorted_categories[:5]
+            ],
+            'total_monthly_discretionary': sum(
+                amount / 3 for cat, amount in sorted_categories 
+                if cat.lower() not in ['rent', 'utilities', 'groceries', 'healthcare']
+            )
+        }
     }
     
-    # Cache the context
-    cache.set(cache_key, context, cache_timeout)
-    
     return context
-
-# Generate seasonal trends and patterns for better predictions
-def generate_seasonal_trends(user):
-    """Generate seasonal patterns and trends from user expense data"""
-    try:
-        # Get expenses from the last year
-        one_year_ago = timezone.now().date() - datetime.timedelta(days=365)
-        expenses = Expense.objects.filter(
-            owner=user,
-            date__gte=one_year_ago
-        ).values('amount', 'date', 'category')
-        
-        if not expenses:
-            return {"message": "Not enough data for seasonal analysis"}
-        
-        # Convert to DataFrame for analysis
-        df = pd.DataFrame(list(expenses))
-        
-        # Generate monthly aggregation
-        if not df.empty and 'date' in df.columns and 'amount' in df.columns:
-            df['date'] = pd.to_datetime(df['date'])
-            df['month'] = df['date'].dt.month
-            monthly_totals = df.groupby('month')['amount'].sum().to_dict()
-            
-            # Generate category-wise monthly trends
-            category_trends = {}
-            if 'category' in df.columns:
-                for category in df['category'].unique():
-                    cat_data = df[df['category'] == category]
-                    if not cat_data.empty:
-                        category_trends[category] = cat_data.groupby('month')['amount'].sum().to_dict()
-            
-            return {
-                "monthly_spending": monthly_totals,
-                "category_trends": category_trends
-            }
-        
-        return {"message": "Data format unsuitable for trend analysis"}
-        
-    except Exception as e:
-        return {"error": str(e)}
-
-# Function to generate chatbot response using local Ollama model
-def generate_response(user_input, context):
-    """Generate response from local Ollama LLM with optimized context size for Gemma 2B"""
-    # For Gemma 2B on an i3, we need to be very careful with context size
-    
-    # Further reduce context for performance
-    query_keywords = user_input.lower()
-    
-    # Create a very minimal prompt for Gemma 2B
-    prompt = "You are a financial assistant. Answer briefly.\n\n"
-    
-    # Only add the most essential context based on query
-    if any(word in query_keywords for word in ['expense', 'spend', 'cost']):
-        # Just summarize expenses in one line
-        total = context.get('stats', {}).get('expense_total', 0)
-        prompt += f"Total expenses: ₹{total}. "
-        
-        # Add at most 1 recent expense as example
-        recent = context.get('recent_expenses', [])
-        if recent and len(recent) > 0:
-            exp = recent[0]
-            prompt += f"Most recent: {exp.get('category')} ₹{exp.get('amount')}. "
-    
-    if any(word in query_keywords for word in ['goal', 'save']):
-        # Only include the first goal if any
-        goals = context.get('goals', [])
-        if goals and len(goals) > 0:
-            goal = goals[0]
-            prompt += f"Goal: {goal.get('name')} - Progress: ₹{goal.get('current_saved_amount')}/₹{goal.get('amount_to_save')}. "
-    
-    if any(word in query_keywords for word in ['income', 'earn']):
-        # Just the total income
-        total = context.get('stats', {}).get('income_total', 0)
-        prompt += f"Total income: ₹{total}. "
-    
-    # Add the actual user question
-    prompt += f"\nUser: {user_input}\n\nAssistant:"
-    
-    # Call the Ollama API with increased timeout and retry logic
-    max_retries = 2
-    current_retry = 0
-    timeout_seconds = 45  # Increased timeout for slower systems
-    
-    while current_retry <= max_retries:
-        try:
-            # Using the completion endpoint with minimal parameters
-            response = requests.post(
-                f"{OLLAMA_BASE_URL}/generate",
-                json={
-                    "model": OLLAMA_MODEL,
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": {
-                        "temperature": 0.5,  # Lower temperature for more predictable responses
-                        "num_predict": 500,  # Increased from 150 to 500 tokens
-                        "top_k": 40,
-                        "top_p": 0.9,
-                        "stop": ["\n\n", "User:"]  # Add stop sequences to prevent truncation
-                    }
-                },
-                timeout=timeout_seconds
-            )
-            
-            # Add response validation
-            if response.status_code == 200:
-                result = response.json()
-                response_text = result.get("response", "")
-                
-                # Check if response ends naturally or was cut off
-                if response_text and not any(response_text.endswith(x) for x in ['.', '!', '?']):
-                    response_text += "..."
-                    
-                return response_text or "I've analyzed your financial data and can provide a brief insight."
-            else:
-                current_retry += 1
-                if current_retry > max_retries:
-                    return "Sorry, I'm having trouble processing your request right now. Please try a shorter question."
-        
-        except requests.exceptions.Timeout:
-            current_retry += 1
-            timeout_seconds += 15  # Increase timeout for next retry
-            if current_retry > max_retries:
-                return "I apologize, but the response is taking too long. Try asking a simpler question or check again later."
-            
-        except Exception as e:
-            return f"I encountered an issue while processing your request. Error: {str(e)[:50]}..."
-    
-    return "Unable to get a response at this time. Please try again later."
 
 @csrf_exempt
 @login_required
 def chatbot_view(request):
+    """Handle chat interactions with the LLM"""
     chat_history = Chat.objects.filter(user=request.user).order_by('-timestamp')
 
     if request.method == 'POST':
         user_message = request.POST.get('message')
 
         if user_message:
-            # Use the optimized context gathering function
-            context = get_combined_context(request.user)
+            # Get focused financial context
+            context = get_financial_context(request.user)
+            
+            # Check if there's an active goal
+            if 'error' in context:
+                assistant_message = (
+                    "I notice you don't have an active financial goal set up yet. "
+                    "To help you effectively, I need a specific goal with a target amount "
+                    "and deadline. Would you like to set one up now?"
+                )
+                Chat.objects.create(user=request.user, message=user_message, response=assistant_message)
+                return JsonResponse({
+                    'response': assistant_message,
+                    'error': context['error']
+                })
+            
+            # Generate response using LLaMA
+            try:
+                completion = client.chat.completions.create(
+                    extra_body={},
+                    model="meta-llama/llama-3.3-70b-instruct",
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": """You are a goal-centric financial planning assistant AI designed to help users achieve a single, clearly defined financial goal based on their income and expense patterns. You have access to the following data:
 
-            # Generate the assistant's response
-            assistant_message = generate_response(user_message, context)
+- Time series data of the user's income
+- Time series data of the user's expenses
+- A single financial goal that includes:
+  - Target amount
+  - Target completion date
+  - Current progress
+  - Required weekly/monthly savings
+
+Your responsibilities:
+1. Track progress toward the financial goal
+2. Recommend monthly or weekly saving strategies aligned with the user's income and spending patterns
+3. Adjust savings recommendations dynamically based on recent changes in income or expenses
+4. Warn the user when their current behavior puts the goal at risk
+5. Provide clear, step-by-step guidance to help the user stay on track or catch up
+
+Guidelines:
+- Every recommendation must be made with the sole aim of helping the user achieve their specified goal
+- Use available data to estimate surplus/deficit and project goal achievement feasibility
+- Provide time-based progress updates and required course corrections
+- Be supportive but realistic — if the goal is unlikely to be met, suggest alternatives or revised timelines
+- Include simple summaries of how much needs to be saved and by when"""
+                        },
+                        {
+                            "role": "user",
+                            "content": f"Here is my current financial situation and goal:\n{json.dumps(context, indent=2)}\n\nMy question is: {user_message}"
+                        }
+                    ]
+                )
+                assistant_message = completion.choices[0].message.content
+            except Exception as e:
+                assistant_message = f"I apologize, but I encountered an error processing your request: {str(e)[:100]}..."
 
             # Save to database
             Chat.objects.create(user=request.user, message=user_message, response=assistant_message)
 
-            # For AJAX requests, return JSON response
+            # Handle AJAX requests
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                # Get updated chat history
                 updated_chat_history = Chat.objects.filter(user=request.user).order_by('-timestamp')
-                
-                # Render the updated chat history to HTML
                 chat_history_html = render_to_string(
                     'finassist/partials/chat_history.html',
                     {'chat_history': updated_chat_history},
@@ -278,68 +219,27 @@ def chatbot_view(request):
                     }
                 })
 
-            # For regular requests, return the full page
             return render(request, 'finassist/chatbot.html', {'chat_history': chat_history})
 
-    # GET request - render the initial page
-    return render(request, 'finassist/chatbot.html', {'chat_history': chat_history})
-
-@login_required
-def test_ollama_connection(request):
-    """Test if Ollama is running properly with the Gemma model"""
-    try:
-        # Increase timeout for model response check
-        response = requests.get(f"{OLLAMA_BASE_URL}/tags", timeout=30)
-        
-        if response.status_code == 200:
-            models = response.json().get("models", [])
-            gemma_available = any("gemma:2b" in model.get("name", "") for model in models)
-            
-            if gemma_available:
-                # Try a simple prompt with increased timeout
-                test_response = requests.post(
-                    f"{OLLAMA_BASE_URL}/generate",
-                    json={
-                        "model": OLLAMA_MODEL,
-                        "prompt": "Hello",  # Even shorter prompt for testing
-                        "stream": False,
-                        "options": {
-                            "num_predict": 20,  # Minimal response for testing
-                            "temperature": 0.1  # Low temperature for faster response
-                        }
-                    },
-                    timeout=45  # Much longer timeout for i3 system
-                )
-                
-                if test_response.status_code == 200:
-                    return JsonResponse({
-                        "status": "success", 
-                        "message": "Ollama with Gemma 2B is running properly",
-                        "sample_response": test_response.json().get("response")
-                    })
-                else:
-                    return JsonResponse({
-                        "status": "error",
-                        "message": f"Gemma model loaded but generation failed with status code: {test_response.status_code}"
-                    })
-            else:
-                return JsonResponse({
-                    "status": "error",
-                    "message": "Gemma 2B model not found. Please run 'ollama pull gemma:2b' first.",
-                    "available_models": [model.get("name") for model in models]
-                })
-        else:
-            return JsonResponse({
-                "status": "error",
-                "message": f"Ollama returned status code: {response.status_code}"
-            })
-    except requests.exceptions.Timeout:
-        return JsonResponse({
-            "status": "error",
-            "message": "Connection to Ollama timed out. This is common on i3 systems. Try restarting Ollama with 'ollama serve --gpu 0' for CPU-only mode."
-        })
-    except Exception as e:
-        return JsonResponse({
-            "status": "error",
-            "message": f"Error connecting to Ollama: {str(e)}"
-        })
+    # Display welcome message with example queries
+    context = get_financial_context(request.user)
+    welcome_context = {
+        'chat_history': chat_history,
+        'show_welcome': True,  # Flag to show welcome message in template
+        'goal': context.get('goal') if 'error' not in context else None,
+        'example_queries': [
+            "Am I on track to save $5,000 for my emergency fund by August?",
+            "What adjustments should I make to hit my goal faster?",
+            "How much can I safely save each week without disrupting essential expenses?",
+            "If my rent just increased, how does that affect my goal?",
+            "Can you break down what I need to save monthly from now until the deadline?"
+        ],
+        'capabilities': [
+            "Weekly/monthly savings targets",
+            "Progress updates",
+            "Trade-offs or adjustments if you fall behind",
+            "Spending cuts to prioritize your goal"
+        ]
+    }
+    
+    return render(request, 'finassist/chatbot.html', welcome_context)

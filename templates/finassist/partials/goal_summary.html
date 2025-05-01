@@ -1,0 +1,34 @@
+{% if goal %}
+<div class="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg shadow-xl p-4 mb-6">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold">{{ goal.name }}</h3>
+        <span class="text-sm bg-white/20 rounded-full px-3 py-1">
+            {{ goal.days_remaining }} days remaining
+        </span>
+    </div>
+    
+    <!-- Progress Bar -->
+    <div class="w-full bg-white/20 rounded-full h-2.5 mb-4">
+        <div class="bg-white h-2.5 rounded-full" style="width: {{ goal.progress_percent }}%"></div>
+    </div>
+    
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+        <div>
+            <p class="text-white/70">Target</p>
+            <p class="font-semibold">${{ goal.target_amount|floatformat:2 }}</p>
+        </div>
+        <div>
+            <p class="text-white/70">Saved</p>
+            <p class="font-semibold">${{ goal.current_saved|floatformat:2 }}</p>
+        </div>
+        <div>
+            <p class="text-white/70">Weekly Need</p>
+            <p class="font-semibold">${{ goal.weekly_target|floatformat:2 }}</p>
+        </div>
+        <div>
+            <p class="text-white/70">Monthly Need</p>
+            <p class="font-semibold">${{ goal.monthly_target|floatformat:2 }}</p>
+        </div>
+    </div>
+</div>
+{% endif %}

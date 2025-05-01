@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: expensetracker
+  namespace: expensetracker
 spec:
   replicas: 1
   selector:
@@ -20,4 +21,9 @@ spec:
           env:
             - name: SQL_HOST
               value: postgres
+            - name: LLM_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: chatbot-secret
+                  key: LLM_API_KEY
 

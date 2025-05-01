@@ -1,15 +1,15 @@
 from django.db import models
 from django.contrib.auth.models import User
-
+from django.utils import timezone
 
 class Chat(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    message = models.TextField()  # User's input
-    response = models.TextField()  # AI's response
-    timestamp = models.DateTimeField(auto_now_add=True)
+    message = models.TextField()
+    response = models.TextField()
+    timestamp = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ['-timestamp']
 
     def __str__(self):
-        return f"Chat with {self.user.username} at {self.timestamp}"
-
-
-# Create your models here.
+        return f"{self.user.username} - {self.timestamp.strftime('%Y-%m-%d %H:%M')}"
