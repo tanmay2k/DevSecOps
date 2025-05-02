@@ -33,11 +33,11 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 # Custom JSON Encoder to handle date objects
-class DateTimeEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, (datetime.date, datetime.datetime)):
-            return obj.isoformat()
-        return super().default(obj)
+#class DateTimeEncoder(json.JSONEncoder):
+#    def default(self, obj):
+#        if isinstance(obj, (datetime.date, datetime.datetime)):
+#            return obj.isoformat()
+#        return super().default(obj)
 
 # Initialize OpenRouter client for model access
 client = OpenAI(
