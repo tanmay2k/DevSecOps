@@ -20,10 +20,10 @@ OLLAMA_MODEL    = os.getenv("OLLAMA_MODEL") or os.getenv("MODEL_NAME")
 
 
 # API KEY configuration for local model (same as finassist)
-client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=os.getenv("LLM_API_KEY"),
-)
+#client = OpenAI(
+#    base_url="https://openrouter.ai/api/v1",
+#    api_key=os.getenv("LLM_API_KEY"),
+#)
 
 def generate_ai_recommendations(user):
     # Fetch user data
