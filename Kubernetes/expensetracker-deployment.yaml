@@ -26,4 +26,14 @@ spec:
                 secretKeyRef:
                   name: chatbot-secret
                   key: LLM_API_KEY
+            - name: API_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: chatbot-secret
+                  key: API_BASE
+            - name: MODEL_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: chatbot-secret
+                  key: MODEL_NAME
 

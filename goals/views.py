@@ -14,6 +14,11 @@ import requests  # Replace OpenAI with standard requests
 from django.conf import settings
 import logging
 
+import os
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL") or os.getenv("API_BASE")
+OLLAMA_MODEL    = os.getenv("OLLAMA_MODEL") or os.getenv("MODEL_NAME")
+
+
 # API KEY configuration for local model (same as finassist)
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
@@ -82,6 +87,7 @@ Give 3-5 actionable recommendations to improve finances. Be specific.""".format(
             # Using the generate endpoint with minimal parameters
             response = requests.post(
                 f"{OLLAMA_BASE_URL}/generate",
+                headers={"Authorization": f"Bearer {os.getenv('LLM_API_KEY')}"},
                 json={
                     "model": OLLAMA_MODEL,
                     "prompt": prompt,
