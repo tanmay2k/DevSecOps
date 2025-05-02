@@ -11,6 +11,7 @@ from django.template.loader import render_to_string
 from django.db.models import Sum, Avg, Count
 from django.db.models.functions import ExtractMonth, TruncMonth
 from django.utils import timezone
+from decimal import Decimal
 import datetime
 import pandas as pd
 import numpy as np
@@ -172,8 +173,7 @@ def get_combined_context(user):
             continue
             
         amount_needed = goal['amount_to_save'] - goal['current_saved_amount']
-        monthly_target = amount_needed / (days_until_deadline / 30.44)  # days to months
-        
+        monthly_target = amount_needed / (Decimal(days_until_deadline) / Decimal('30.44')) 
         # Check if monthly target exceeds average monthly savings
         avg_monthly_savings = max(0, income_stats['avg_monthly'] - expense_stats['avg_monthly'])
         
